@@ -18,3 +18,5 @@ Debug/**
 /examples/csharp/Properties
 /examples/csharp/bin
 /examples/cpp/x64
+/aid2/Debug
+/aid2/x64

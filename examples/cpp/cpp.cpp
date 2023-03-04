@@ -2,6 +2,7 @@
 //
 #include "aid/aiddll.h"
 #include <iostream>
+//#include "aid2/service.h"
 
 int main(int argc, char* argv[], char* envp[])
 {
@@ -15,6 +16,7 @@ int main(int argc, char* argv[], char* envp[])
 	else
 	{
 		ret = aid(argv[1]);
+		 //ret = test(1, 1);
 	}
 	return  ret ? EXIT_SUCCESS : EXIT_FAILURE;
 }
