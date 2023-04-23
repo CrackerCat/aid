@@ -47,10 +47,8 @@ bool aidClient::RemoteAuth(AppleMobileDeviceEx & mobile_device, unsigned char* r
     request.set_rq_data((char*)rq, length);
     request.set_rq_sig_data((char*)sig, sig_length);
     request.set_grappa_session_id(mobile_device.grappa_session_id());
-    request.set_key_fair_play_guid(mobile_device.key_fair_play_guid(), mobile_device.key_fair_play_guid_length());
     request.set_fair_play_certificate(mobile_device.fair_play_certificate(), mobile_device.fair_play_certificate_len());
     request.set_fair_device_type(mobile_device.fair_play_device_type());
-    request.set_private_key(0);
     request.set_fair_play_guid(mobile_device.fair_play_guid(), strlen(mobile_device.fair_play_guid()));
     request.set_grappa(mobile_device.grappa_data(), mobile_device.grappa_data_len());;
     // Container for the data we expect from the server.
