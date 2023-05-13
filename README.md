@@ -3,7 +3,7 @@ Authorize ios device  安装app都不需要连接到appstore去下载和购买�
 
 由于有使用者反映，这些依赖古老itenus版本dll文件和新版本和各种助手存在冲突，近期计划开发不依赖这些dll版本，敬请关注！
 
-
+邮箱：2277695881@qq.com      qq:2277695881
 # 使用iTunes原装dll 开发苹果助手功能
 iTunes 用的dll 和 libimobiledevice 开发有很大不同，特别里面针对权限，登录，授权等功能不是libimobiledevice所有实现的，只是详细记录一下这些功能会用到，以供查阅。
 # 环境
