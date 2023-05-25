@@ -200,10 +200,6 @@
     <ClInclude Include="..\ProtoBuf\GenerateRS\GenerateRS.grpc.pb.h" />
     <ClInclude Include="..\ProtoBuf\GenerateRS\GenerateRS.pb.h" />
     <ClInclude Include="..\smartbot\passport\basictypes.h" />
-    <ClInclude Include="..\smartbot\passport\itunes_cookie_interface.h" />
-    <ClInclude Include="..\smartbot\passport\itunes_download_info.h" />
-    <ClInclude Include="..\smartbot\passport\itunes_https.h" />
-    <ClInclude Include="..\smartbot\passport\itunes_https_configure.h" />
     <ClInclude Include="..\smartbot\passport\itunes_internal_interface.h" />
     <ClInclude Include="..\smartbot\passport\itunes_native_interface.h" />
     <ClInclude Include="..\smartbot\thirdparty\glog\basictypes.h" />
@@ -286,10 +282,6 @@
     <ClCompile Include="..\ProtoBuf\GenerateRS\GenerateRS.grpc.pb.cc" />
     <ClCompile Include="..\ProtoBuf\GenerateRS\GenerateRS.pb.cc" />
     <ClCompile Include="..\smartbot\base\string\string_conv.cc" />
-    <ClCompile Include="..\smartbot\passport\itunes_cookie_interface.cc" />
-    <ClCompile Include="..\smartbot\passport\itunes_download_info.cc" />
-    <ClCompile Include="..\smartbot\passport\itunes_https.cc" />
-    <ClCompile Include="..\smartbot\passport\itunes_https_configure.cc" />
     <ClCompile Include="..\smartbot\passport\itunes_native_interface.cc" />
     <ClCompile Include="..\smartbot\thirdparty\glog\logging.cc" />
     <ClCompile Include="..\smartbot\cookies\cookie_constants.cc" />

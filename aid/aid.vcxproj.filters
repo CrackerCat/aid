@@ -67,18 +67,6 @@
     <ClCompile Include="..\smartbot\cookies\parsed_cookie.cc">
       <Filter>smartbot\cookies</Filter>
     </ClCompile>
-    <ClCompile Include="..\smartbot\passport\itunes_cookie_interface.cc">
-      <Filter>smartbot\passport</Filter>
-    </ClCompile>
-    <ClCompile Include="..\smartbot\passport\itunes_download_info.cc">
-      <Filter>smartbot\passport</Filter>
-    </ClCompile>
-    <ClCompile Include="..\smartbot\passport\itunes_https.cc">
-      <Filter>smartbot\passport</Filter>
-    </ClCompile>
-    <ClCompile Include="..\smartbot\passport\itunes_https_configure.cc">
-      <Filter>smartbot\passport</Filter>
-    </ClCompile>
     <ClCompile Include="..\smartbot\passport\itunes_native_interface.cc">
       <Filter>smartbot\passport</Filter>
     </ClCompile>
@@ -336,18 +324,6 @@
       <Filter>smartbot\memory</Filter>
     </ClInclude>
     <ClInclude Include="..\smartbot\passport\basictypes.h">
-      <Filter>smartbot\passport</Filter>
-    </ClInclude>
-    <ClInclude Include="..\smartbot\passport\itunes_cookie_interface.h">
-      <Filter>smartbot\passport</Filter>
-    </ClInclude>
-    <ClInclude Include="..\smartbot\passport\itunes_download_info.h">
-      <Filter>smartbot\passport</Filter>
-    </ClInclude>
-    <ClInclude Include="..\smartbot\passport\itunes_https.h">
-      <Filter>smartbot\passport</Filter>
-    </ClInclude>
-    <ClInclude Include="..\smartbot\passport\itunes_https_configure.h">
       <Filter>smartbot\passport</Filter>
     </ClInclude>
     <ClInclude Include="..\smartbot\passport\itunes_internal_interface.h">
