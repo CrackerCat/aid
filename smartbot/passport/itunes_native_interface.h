@@ -15,7 +15,6 @@ namespace passport{
 	{
 	public:
 		static iTunesNativeInterface* GetInstance();
-		void Init();
 	private:
 		enum CustomizeModule{ kCoreFP, kiTunesMobileDeviceDLL };
 		iTunesNativeInterface(void);
