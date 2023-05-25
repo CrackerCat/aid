@@ -2,8 +2,7 @@
 #define ABI_IOS_AUTHORIZE_RS_GEN_H_
 //////////////////////////////////////////////////////////////////////////
 #include "ABI/base/basetypes.h"
-#include "ABI/ios_authorize/iTunesInterface.h"
-#include "passport/itunes_client_interface.h"
+//#include "passport/itunes_client_interface.h"
 #include "passport/itunes_native_interface.h"
 //////////////////////////////////////////////////////////////////////////
 namespace ABI{

@@ -3,7 +3,7 @@
 //////////////////////////////////////////////////////////////////////////
 #include "passport/basictypes.h"
 //#include "../ios_proxy_auth/ios_proxy.h"
-#include "..\smartbot\passport\itunes_client_interface.h"
+//#include "..\smartbot\passport\itunes_client_interface.h"
 //////////////////////////////////////////////////////////////////////////
 namespace passport{
 	namespace internal{

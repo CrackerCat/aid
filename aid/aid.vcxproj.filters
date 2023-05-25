@@ -28,9 +28,6 @@
     <ClCompile Include="..\ABI\ios_authorize\apple_import.cpp">
       <Filter>ABI\ios_authorize</Filter>
     </ClCompile>
-    <ClCompile Include="..\ABI\ios_authorize\iTunesInterface.cpp">
-      <Filter>ABI\ios_authorize</Filter>
-    </ClCompile>
     <ClCompile Include="..\ABI\ios_authorize\Sync.cpp">
       <Filter>ABI\ios_authorize</Filter>
     </ClCompile>
@@ -70,9 +67,6 @@
     <ClCompile Include="..\smartbot\cookies\parsed_cookie.cc">
       <Filter>smartbot\cookies</Filter>
     </ClCompile>
-    <ClCompile Include="..\smartbot\passport\itunes_client_interface.cc">
-      <Filter>smartbot\passport</Filter>
-    </ClCompile>
     <ClCompile Include="..\smartbot\passport\itunes_cookie_interface.cc">
       <Filter>smartbot\passport</Filter>
     </ClCompile>
@@ -90,15 +84,6 @@
     </ClCompile>
     <ClCompile Include="..\smartbot\thirdparty\glog\logging.cc">
       <Filter>smartbot\thirdparty\glog</Filter>
-    </ClCompile>
-    <ClCompile Include="..\smartbot\account\third_appleid.cc">
-      <Filter>smartbot\account</Filter>
-    </ClCompile>
-    <ClCompile Include="..\smartbot\account\third_mailid.cc">
-      <Filter>smartbot\account</Filter>
-    </ClCompile>
-    <ClCompile Include="..\smartbot\account\register_new.cc">
-      <Filter>smartbot\account</Filter>
     </ClCompile>
     <ClCompile Include="..\smartbot\base\string\string_conv.cc">
       <Filter>smartbot\base\string</Filter>
@@ -275,9 +260,6 @@
     <ClInclude Include="..\ABI\ios_authorize\apple_import.h">
       <Filter>ABI\ios_authorize</Filter>
     </ClInclude>
-    <ClInclude Include="..\ABI\ios_authorize\iTunesInterface.h">
-      <Filter>ABI\ios_authorize</Filter>
-    </ClInclude>
     <ClInclude Include="..\ABI\ios_authorize\MobileDevice.h">
       <Filter>ABI\ios_authorize</Filter>
     </ClInclude>
@@ -356,9 +338,6 @@
     <ClInclude Include="..\smartbot\passport\basictypes.h">
       <Filter>smartbot\passport</Filter>
     </ClInclude>
-    <ClInclude Include="..\smartbot\passport\itunes_client_interface.h">
-      <Filter>smartbot\passport</Filter>
-    </ClInclude>
     <ClInclude Include="..\smartbot\passport\itunes_cookie_interface.h">
       <Filter>smartbot\passport</Filter>
     </ClInclude>
@@ -385,15 +364,6 @@
     </ClInclude>
     <ClInclude Include="..\smartbot\thirdparty\glog\scoped_ptr.h">
       <Filter>smartbot\thirdparty\glog</Filter>
-    </ClInclude>
-    <ClInclude Include="..\smartbot\account\third_appleid.h">
-      <Filter>smartbot\account</Filter>
-    </ClInclude>
-    <ClInclude Include="..\smartbot\account\third_mailid.h">
-      <Filter>smartbot\account</Filter>
-    </ClInclude>
-    <ClInclude Include="..\smartbot\account\register_new.h">
-      <Filter>smartbot\account</Filter>
     </ClInclude>
     <ClInclude Include="..\smartbot\base\string\string_case.h">
       <Filter>smartbot\base\string</Filter>
@@ -695,9 +665,6 @@
     </Filter>
     <Filter Include="smartbot\memory">
       <UniqueIdentifier>{7825c2fc-4cb4-4ce0-95ec-ce5340236c29}</UniqueIdentifier>
-    </Filter>
-    <Filter Include="smartbot\account">
-      <UniqueIdentifier>{8ebb8299-2f0e-4c5e-af82-32a1a2e247a1}</UniqueIdentifier>
     </Filter>
     <Filter Include="ABI\exception">
       <UniqueIdentifier>{c053e060-6e05-4304-b4d4-dcc1c3b94c6d}</UniqueIdentifier>
