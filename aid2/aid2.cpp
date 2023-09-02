@@ -10,9 +10,14 @@ using namespace std;
 using namespace aid2;
 static map<string, iOSDevice *> gudid;
 static bool gautoAuthorize = true;
+static char* gipaPath;
 static map<string,future<void>> gmapfut;
 static CFRunLoopRef grunLoop;
-static AuthorizeDeviceCallbackFunc gcallback;
+
+// 连接回调指针函数指针变量
+static ConnectCallbackFunc ConnectCallback = nullptr;
+// 断开连接回调函数指针变量
+static DisconnectCallbackFunc  DisconnectCallback = nullptr;
 
 void device_notification_callback(struct AMDeviceNotificationCallbackInformation* CallbackInfo)
 {
@@ -27,6 +32,8 @@ void device_notification_callback(struct AMDeviceNotificationCallbackInformation
 				string udid = apple_device->udid();
 				if (udid.length() > 24) {  //只有取到udid
 					gudid[udid] = apple_device;
+					// 连接回调
+					ConnectCallback(udid.c_str(), apple_device->DeviceName().c_str(), apple_device->ProductType().c_str());
 					logger.log("Start Device.");
 					logger.log("Device %p connected,udid:%s", deviceHandle, udid.c_str());
 					if (gautoAuthorize)   //自动授权
@@ -35,8 +42,14 @@ void device_notification_callback(struct AMDeviceNotificationCallbackInformation
 							auto ret = AuthorizeDevice(udid.c_str());
 							string deviceName = apple_device->DeviceName();
 							string productType = apple_device->ProductType();
-							gcallback({ udid.c_str(),deviceName.c_str(),productType.c_str(), ret ? AuthorizeReturnStatus::AuthorizeSuccess : AuthorizeReturnStatus::AuthorizeFailed });
-							});
+							if(iOSDevice::DoPairCallback)
+								iOSDevice::DoPairCallback( udid.c_str(),deviceName.c_str(),productType.c_str(), ret ? AuthorizeReturnStatus::AuthorizeSuccess : AuthorizeReturnStatus::AuthorizeFailed );
+							if (gipaPath) {
+								auto retInstall = apple_device->InstallApplication(gipaPath);
+								if(iOSDevice::InstallApplicationCallback)
+									iOSDevice::InstallApplicationCallback(retInstall ? "success" : "fail", 100);
+							}
+						});
 					}
 				}
 				else {
@@ -68,6 +81,7 @@ void device_notification_callback(struct AMDeviceNotificationCallbackInformation
 					delete gudid[udid];
 					gmapfut.erase(udid);
 					gudid.erase(udid);
+					DisconnectCallback(udid.c_str());
 					logger.log("Device %p disconnected,udid:%s", deviceHandle, udid.c_str());
 				}
 				else
@@ -90,7 +104,7 @@ void device_notification_callback(struct AMDeviceNotificationCallbackInformation
 	}
 }
 
-AID2_API bool StartListen(bool autoAuthorize)
+bool StartListen(bool autoAuthorize,const char* ipaPath)
 {
 	gmapfut["listen"] = async(launch::async, [autoAuthorize] {
 		void* subscribe = nullptr;
@@ -105,16 +119,22 @@ AID2_API bool StartListen(bool autoAuthorize)
 		CFRelease(subscribe);
 		return;
 	});
+	if (ipaPath) {
+		auto len = strlen(ipaPath);
+		gipaPath = (char*)malloc(len + 1);
+		memcpy(gipaPath, ipaPath, len + 1);
+	}
 	gautoAuthorize = autoAuthorize;
 	logger.log("StartListen( %s ) success.", autoAuthorize ? "True" : "False");
 	return true;
 }
 
-AID2_API bool StopListen()
+bool StopListen()
 {
 	CFRunLoopStop(grunLoop);
 	gmapfut["listen"].wait();
 	gmapfut.erase("listen");
+	free(gipaPath);
 	logger.log( "StopListen success." );
 	return true;
 }
@@ -133,7 +153,6 @@ bool AuthorizeDevice(const char * udid) {
 		}
 	}
 	auto apple_device = gudid.at(udid);
-	apple_device->DoPairCallback = gcallback;  //设置配对事件消息回调函数
 	if (!apple_device->DoPair()) {
 		logger.log("信认失败或没有通过。");
 		return false;
@@ -215,6 +234,46 @@ bool AuthorizeDevice(const char * udid) {
 }
 
 
-void RegisterCallback(AuthorizeDeviceCallbackFunc callback) {
-	gcallback = callback;
+bool InstallApplication(const char* udid, const char* ipaPath) {
+	int i = 0;
+	for (;;) {
+		this_thread::sleep_for(chrono::milliseconds(2));
+		if (gudid[udid] != nullptr) {
+			break;
+		}
+		if (i++ >= 30) {
+			logger.log("设备没有插入，初始化失败。");
+			return false;
+		}
+	}
+	auto apple_device = gudid.at(udid);
+	if (!apple_device->DoPair()) {
+		logger.log("信认失败或没有通过。");
+		return false;
+	};
+	auto retInstall = apple_device->InstallApplication(ipaPath);
+	if(iOSDevice::InstallApplicationCallback)
+		iOSDevice::InstallApplicationCallback(retInstall ? "success" : "fail", 100);
+	return retInstall;
+}
+
+
+//注册授权回调函数，授权过程中需要配对信息和授权结果通过回调函数通知
+void RegisterAuthorizeCallback(AuthorizeDeviceCallbackFunc callback) {
+	iOSDevice::DoPairCallback = callback;
+}
+
+//注册安装回调函数，授权过程中需要配对信息和授权结果通过回调函数通知
+void RegisterInstallCallback(InstallApplicationFunc callback) {
+	iOSDevice::InstallApplicationCallback = callback;
+}
+
+void RegisterConnectCallback(ConnectCallbackFunc callback)
+{
+	ConnectCallback = callback;
+}
+
+void RegisterDisconnectCallback(DisconnectCallbackFunc callback)
+{
+	DisconnectCallback = callback;
 }

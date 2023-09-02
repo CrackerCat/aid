@@ -89,10 +89,12 @@ extern "C"
 	{
 		kCFStringEncodingInvalidId = -1L,
 		kCFStringEncodingMacRoman = 0L,
+		kCFStringEncodingMacChineseSimp = 25,
 		kCFStringEncodingWindowsLatin1 = 0x0500, /* ANSI codepage 1252 */
 		kCFStringEncodingISOLatin1 = 0x0201,	 /* ISO 8850 1 */
 		kCFStringEncodingNextStepLatin = 0x0B01, /* NextStep encoding*/
 		kCFStringEncodingASCII = 0x0600,		 /* 0..127 */
+		kCFStringEncodingGB_18030_2000 = 0x0632,	/* gb18030±àÂë */
 		kCFStringEncodingUnicode = 0x0100,		 /* kTextEncodingUnicodeDefault  + kTextEncodingDefaultFormat (aka kUnicode16BitFormat) */
 		kCFStringEncodingUTF8 = 0x08000100,		 /* kTextEncodingUnicodeDefault + kUnicodeUTF8Format */
 		kCFStringEncodingNonLossyASCII = 0x0BFF	 /* 7bit Unicode variants used by YellowBox & Java */

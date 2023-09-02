@@ -1,7 +1,15 @@
 #include "iOSDevice.h"
 #include "Logger.h"
+#include <string>  
+#include <fstream>  
+#include <sstream>
 
 namespace aid2{
+	
+	
+	AuthorizeDeviceCallbackFunc iOSDevice::DoPairCallback = nullptr;
+	InstallApplicationFunc iOSDevice::InstallApplicationCallback = nullptr;
+
 	iOSDevice::iOSDevice(AMDeviceRef deviceHandle)
 	{
 		m_deviceHandle = deviceHandle;
@@ -531,11 +539,76 @@ namespace aid2{
 		return rqSize;
 	}
 
-	bool iOSDevice::InstallApplication(const string path)
-	{
-		return false;
+	void iOSDevice::transfer_callback(CFDictionaryRef dict, int arg) {
+		int percent;
+		CFStringRef status = CFDictionaryGetValue(dict, CFStringCreateWithCString(NULL,"Status", kCFStringEncodingUTF8));
+		CFNumberGetValue(CFDictionaryGetValue(dict, CFStringCreateWithCString(NULL, "PercentComplete", kCFStringEncodingUTF8)), kCFNumberSInt32Type, &percent);
+		auto len = CFStringGetLength(status);
+		string strStatus;
+		strStatus.resize(len);
+		CFStringGetCString(status, (char*)strStatus.c_str(), len + 1, kCFStringEncodingUTF8);
+		if (percent != 100) {
+			if (InstallApplicationCallback) {
+				InstallApplicationCallback(strStatus.c_str(), percent);
+			}
+		}
 	}
 
+	void iOSDevice::install_callback(CFDictionaryRef dict, int arg) {
+		int percent;
+		CFStringRef status = CFDictionaryGetValue(dict, CFStringCreateWithCString(NULL,"Status", kCFStringEncodingUTF8));
+		CFNumberGetValue(CFDictionaryGetValue(dict, CFStringCreateWithCString(NULL,"PercentComplete", kCFStringEncodingUTF8)), kCFNumberSInt32Type, &percent);
+		auto len = CFStringGetLength(status);
+		string strStatus;
+		strStatus.resize(len);
+		CFStringGetCString(status, (char*)strStatus.c_str(), len + 1, kCFStringEncodingUTF8);
+		if (InstallApplicationCallback) {
+			InstallApplicationCallback(strStatus.c_str(), (percent <= 5 ? percent : (percent / 2)) + 50);
+		}
+	}
+
+
+	bool iOSDevice::InstallApplication(const string path)
+	{
+		void* serviceHandle;
+		bool ret = true;
+		StartSession();
+		CFStringRef sServiceName = CFStringCreateWithCString(NULL, "com.apple.afc", kCFStringEncodingUTF8);
+		if (AMDeviceStartService(m_deviceHandle, sServiceName, &serviceHandle, NULL) != 0) {
+			ret = false;
+		}
+		CFRelease(sServiceName);
+#ifdef WIN32
+		CFStringRef app_path = CFStringCreateWithCString(NULL, path.c_str(), kCFStringEncodingGB_18030_2000);
+#else
+		CFStringRef app_path = CFStringCreateWithCString(NULL, path.c_str(), kCFStringEncodingUTF8);
+#endif
+		if (AMDeviceTransferApplication(serviceHandle, app_path, NULL, transfer_callback, NULL) != 0)
+		{
+			logger.log("AMDeviceTransferApplication 返回失败。");
+			ret = false;
+		}
+		sServiceName = CFStringCreateWithCString(NULL, "com.apple.mobile.installation_proxy", kCFStringEncodingUTF8);
+		if (AMDeviceStartService(m_deviceHandle, sServiceName, &serviceHandle, NULL) != 0) {
+			ret = false;
+		}
+
+		CFStringRef keys[] = {
+			CFStringCreateWithCString(NULL, "PackageType", kCFStringEncodingUTF8)
+		};
+		CFStringRef values[] = {
+			CFStringCreateWithCString(NULL, "Developer", kCFStringEncodingUTF8)
+		};
+		CFDictionaryRef options = CFDictionaryCreate(NULL, keys, values, 1, NULL, NULL);
+		if (AMDeviceInstallApplication(serviceHandle, app_path, options, install_callback, NULL) != 0) {
+			logger.log("AMDeviceInstallApplication 返回失败,ipa:%s",path.c_str());
+			ret = false;
+		}
+		CFRelease(sServiceName);
+		CFRelease(options);
+		StopSession();
+		return ret;
+	}
 
 	bool iOSDevice::ReadAfsyncRq(string& afsync_rq, string& afsync_rq_sig)
 	{
@@ -679,16 +752,21 @@ namespace aid2{
 
  			if (rc == 0xe800001a){
 				logger.log("udid:%s，请打开密码锁定，进入ios主界面。",m_udid.c_str());
-				DoPairCallback({ m_udid.c_str(),m_deviceName.c_str(),m_productType.c_str(), AuthorizeReturnStatus::AuthorizeDopairingLocking });
-
+				if (DoPairCallback) {
+					DoPairCallback( m_udid.c_str(),m_deviceName.c_str(),m_productType.c_str(), AuthorizeReturnStatus::AuthorizeDopairingLocking );
+				}
  			}
  			else if (rc == 0xe8000096){
 				logger.log("udid:%s，请在设备端按下“信任”按钮。", m_udid.c_str());
-				DoPairCallback({ m_udid.c_str(),m_deviceName.c_str(),m_productType.c_str(), AuthorizeReturnStatus::AuthorizeDopairingTrust });
+				if (DoPairCallback) {
+					DoPairCallback( m_udid.c_str(),m_deviceName.c_str(),m_productType.c_str(), AuthorizeReturnStatus::AuthorizeDopairingTrust );
+				}
  			}
  			else if (rc == 0xe8000095){
 				logger.log("udid:%s，使用者按下了“不信任”按钮。", m_udid.c_str());
-				DoPairCallback({ m_udid.c_str(),m_deviceName.c_str(),m_productType.c_str(), AuthorizeReturnStatus::AuthorizeDopairingNotTrust });
+				if (DoPairCallback) {
+					DoPairCallback( m_udid.c_str(),m_deviceName.c_str(),m_productType.c_str(), AuthorizeReturnStatus::AuthorizeDopairingNotTrust);
+				}
  				return false;
  			}
  			else if (rc == 0){

@@ -41,27 +41,8 @@
 #include "iTunesApi/simpleApi.h"
 #include <string>
 #include <future>
+#include "aid2.h"
 namespace aid2{
-
-	#ifndef AID2_H
-	enum AuthorizeReturnStatus
-	{
-		AuthorizeSuccess = 0,   //授权成功
-		AuthorizeDopairingLocking = 1,  //执行配对中锁屏，执行动作请解开锁屏
-		AuthorizeFailed = 2,  //授权失败
-		AuthorizeDopairingTrust = 3,  //执行配对中需要按信任，执行动作请按信任
-		AuthorizeDopairingNotTrust = 4  //执行配对中使用者按下不信任
-	};
-	//回调函数参数结构体
-	struct DeviceParameter {
-		const char* udid;
-		const char* DeviceName;
-		const char* ProductType;
-		AuthorizeReturnStatus ReturnFlag;
-	};
-	typedef void (*AuthorizeDeviceCallbackFunc)(DeviceParameter r1);//回调函数定义
-	#endif
-
 	using namespace std;
 	class iOSDevice
 	{
@@ -101,9 +82,16 @@ namespace aid2{
 			kAMDError StartSession();
 			kAMDError StopSession();
 			size_t AFCFileSize(string path);
-			// 定义执行配对时回调信息，通过参数提醒使用者按下 信任和不信任信息
-			AuthorizeDeviceCallbackFunc DoPairCallback;  
+
 			bool InstallApplication(const string path);
+
+			// 定义执行配对时回调信息，通过参数提醒使用者按下 信任和不信任信息
+			static AuthorizeDeviceCallbackFunc DoPairCallback;
+			// 安装ipa回调函数指针
+			static InstallApplicationFunc InstallApplicationCallback;
+
+			
+
 	private:
 		const string m_afsync_rq_path = "/AirFair/sync/afsync.rq";
 		const string m_afsync_rq_sig_path = "/AirFair/sync/afsync.rq.sig";
@@ -125,6 +113,10 @@ namespace aid2{
 		__int64 m_fair_play_device_type=0;   //domain: com.apple.mobile.iTunes  key: FairPlayDeviceType+KeyTypeSupportVersion
 		string m_deviceName = "";
 		string m_productType = "";
+		// 安装应用回调处理函数
+		static void install_callback(CFDictionaryRef dict, int arg);
+		// copy ipa 文件到设备回调处理函数
+		static void transfer_callback(CFDictionaryRef dict, int arg);
 	};
 
 }

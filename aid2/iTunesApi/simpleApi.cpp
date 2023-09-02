@@ -494,6 +494,27 @@ CFRange CFRangeMake(CFIndex loc, CFIndex len) {
 	range.length = len;
 	return range;
 }
+Boolean CFEqual(CFTypeRef cf1, CFTypeRef cf2) {
+	return CoreFoundation().CFEqual(cf1, cf2);
+}
+Boolean CFStringHasSuffix(CFStringRef theString, CFStringRef suffix) {
+	return CoreFoundation().CFStringHasSuffix(theString, suffix);
+}
+CFStringRef CFStringCreateCopy(CFAllocatorRef alloc, CFStringRef theString) {
+	return CoreFoundation().CFStringCreateCopy(alloc, theString);
+}
+CFDataRef CFStringCreateExternalRepresentation(CFAllocatorRef alloc, CFStringRef theString, CFStringEncoding encoding, UInt8 lossByte) {
+	return CoreFoundation().CFStringCreateExternalRepresentation(alloc, theString, encoding, lossByte);
+}
+
+void CFShow(CFTypeRef obj) {
+	return CoreFoundation().CFShow(obj);
+}
+
+void CFDictionaryApplyFunction(CFDictionaryRef theDict, void* applier, void* context) {
+	return CoreFoundation().CFDictionaryApplyFunction(theDict, applier, context);
+};
+
 
 #endif
 
@@ -514,6 +535,10 @@ int AMDeviceInstallApplication(void *r1, CFStringRef r2, void *r3, void *r4, voi
 int AMDeviceUninstallApplication(void *r1, CFStringRef r2, void *r3, void *r4, void *r5)
 {
 	return MobileDevice().AMDeviceUninstallApplication(r1, r2, r3, r4, r5);
+}
+int AMDeviceTransferApplication(void* r1, CFStringRef path, CFDictionaryRef options, void* callbackj, void* user)
+{
+	return MobileDevice().AMDeviceTransferApplication(r1, path, options, callbackj, user);
 }
 int AMDeviceRemoveApplicationArchive(void *r1, CFStringRef r2, void *r3, void *r4, void *r5)
 {

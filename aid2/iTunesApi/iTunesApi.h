@@ -131,12 +131,16 @@ public:
 	FUNC_DEF(CFTypeID, _CFKeyedArchiverUIDGetTypeID);
 	FUNC_DEF(int, _CFKeyedArchiverUIDGetValue, void *);
 	FUNC_DEF(CFStringRef, CFStringCreateWithFormat, CFAllocatorRef, CFDictionaryRef, CFStringRef, ...);
-
 	FUNC_DEF(CFBundleRef, CFBundleGetMainBundle);
 	FUNC_DEF(CFURLRef, CFBundleCopyBundleURL, CFBundleRef);
 	FUNC_DEF(CFURLRef, CFURLCreateCopyDeletingLastPathComponent, CFAllocatorRef, CFURLRef);
 	FUNC_DEF(void *, CFURLGetFileSystemRepresentation, CFURLRef, void *, uint8_t *, CFIndex);
-
+	FUNC_DEF(Boolean, CFEqual, CFTypeRef, CFTypeRef);
+	FUNC_DEF(Boolean, CFStringHasSuffix, CFTypeRef, CFTypeRef);
+	FUNC_DEF(CFStringRef, CFStringCreateCopy, CFAllocatorRef, CFStringRef);
+	FUNC_DEF(CFDataRef, CFStringCreateExternalRepresentation, CFAllocatorRef, CFStringRef, CFStringEncoding, UInt8);
+	FUNC_DEF(void, CFShow, CFTypeRef);
+	FUNC_DEF(void, CFDictionaryApplyFunction,CFDictionaryRef, void*, void* context);
 #endif
 private:
 	HMODULE m_hDll = 0;
@@ -157,6 +161,7 @@ public:
 	FUNC_DEF(int, AMDeviceUninstallApplication, void *, CFStringRef, void *, void *, void *);
 	FUNC_DEF(int, AMDeviceRemoveApplicationArchive, void *, CFStringRef, void *, void *, void *);
 	FUNC_DEF(int, AMDeviceArchiveApplication, void *, CFStringRef, void *, void *, void *);
+	FUNC_DEF(int, AMDeviceTransferApplication, void*, CFStringRef, CFDictionaryRef, void*, void*);
 	FUNC_DEF(int, AFCConnectionOpen, void* socketHandle, unsigned int io_timeout, AFCRef* afc);
 	FUNC_DEF(int, AMDServiceConnectionInvalidate, void *);
 	FUNC_DEF(int, AMDeviceNotificationSubscribe, void *, int, int, int, void **);

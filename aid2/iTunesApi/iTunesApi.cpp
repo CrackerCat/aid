@@ -199,7 +199,12 @@ CCoreFoundation::CCoreFoundation(void)
 	FUNC_LOAD(_CFKeyedArchiverUIDGetTypeID);
 	FUNC_LOAD(_CFKeyedArchiverUIDGetValue);
 	FUNC_LOAD(CFStringCreateWithFormat);
-
+	FUNC_LOAD(CFEqual);
+	FUNC_LOAD(CFStringHasSuffix);
+	FUNC_LOAD(CFStringCreateCopy);
+	FUNC_LOAD(CFStringCreateExternalRepresentation);
+	FUNC_LOAD(CFShow);
+	FUNC_LOAD(CFDictionaryApplyFunction);
 	if (NULL == __CFStringMakeConstantString)
 		MessageBoxA(NULL, "CoreFoundation.dll load fun fail", "error", 0);
 #endif
@@ -228,6 +233,7 @@ CMobileDevice::CMobileDevice()
 	FUNC_LOAD(AMDeviceRemoveApplicationArchive);
 	FUNC_LOAD(AMDeviceUninstallApplication);
 	FUNC_LOAD(AMDeviceArchiveApplication);
+	FUNC_LOAD(AMDeviceTransferApplication);
 	FUNC_LOAD(AMDeviceStartHouseArrestService);
 	FUNC_LOAD(AFCConnectionOpen);
 	FUNC_LOAD(AMDServiceConnectionInvalidate);

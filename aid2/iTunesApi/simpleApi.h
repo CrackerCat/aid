@@ -135,6 +135,14 @@ extern "C"
     CFURLRef CFURLCreateCopyDeletingLastPathComponent(CFAllocatorRef, CFURLRef);
     void *CFURLGetFileSystemRepresentation(CFURLRef, void *, uint8_t *, CFIndex);
     CFRange CFRangeMake(CFIndex loc, CFIndex len);
+
+    Boolean CFEqual(CFTypeRef cf1, CFTypeRef cf2  );
+    Boolean CFStringHasSuffix( CFStringRef theString, CFStringRef suffix );
+    CFStringRef CFStringCreateCopy( CFAllocatorRef alloc, CFStringRef theString );
+    CFDataRef CFStringCreateExternalRepresentation(CFAllocatorRef alloc, CFStringRef theString, CFStringEncoding encoding,UInt8 lossByte);
+    void CFShow(CFTypeRef obj);
+    void CFDictionaryApplyFunction(        CFDictionaryRef theDict,        void* applier,        void* context    );
+
 #endif
 
     /////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -170,6 +178,8 @@ extern "C"
     int AMDeviceStartHouseArrestService(void *, void *, void *, void *, void *);
     int AMDeviceInstallApplication(void *, CFStringRef, void *, void *, void *);
     int AMDeviceUninstallApplication(void *, CFStringRef, void *, void *, void *);
+    int AMDeviceTransferApplication(void * , CFStringRef path, CFDictionaryRef options, void * callbackj, void* user);
+
     int AMDeviceRemoveApplicationArchive(void *, CFStringRef, void *, void *, void *);
     int AMDeviceArchiveApplication(void *, CFStringRef, void *, void *, void *);
     int AMDeviceNotificationSubscribe(void *, int, int, int, PPV);
