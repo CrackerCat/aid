@@ -1,6 +1,8 @@
 # aid2: 总览
 Authorize ios device 实现功能和爱思助手一样安装app，使用aid2 授权之后 ，安装的IPA文件不需要输入appid和密码，aid第二版本，可以支持windows和mac系统，目前mac系统还没有调通。
 
+V2.1 版本在之前2.0功能上增加了安装ipa 功能。
+
 邮箱：2277695881@qq.com      qq:2277695881
 # 目录
 
@@ -93,17 +95,13 @@ $ xcode-select --install
     examples目录下面cpp项目为启动项目，就可以进入自动调试状态。
 
 ## 命令行运行
-   进入编译输出目录，x64\Debug或者x64\Release目录，
+   进入编译输出目录，x64\Debug或者x64\Release目录，安装app, 以下命令是安装换机助手，chatgpt，同步助手，由于自定app市场需要大量人力物力，如果需要安装指定的app,请联系上面邮箱或者QQ
 ```cmd
-> cpp
+> cpp h1.0.25.ipa
+> cpp ChatGPT 1.2023.21 1.ipa
+> cpp tonbu11.1.0.ipa
 ```
 
-运行以上命令输出：设备名:iPhone 授权成功 就自动授权成功
+运行以上命令输出：设备名:iPhone 授权成功 就自动授权成功，最后ipa安装成功会弹出安装成功界面
 
-安装app, 以下命令是安装换机助手，chatgpt，同步助手，由于自定app市场需要大量人力物力，如果需要安装指定的app,请联系上面邮箱或者QQ
-```cmd
-> ideviceinstaller.exe -i h1.0.25.ipa
-> ideviceinstaller.exe -i ChatGPT 1.2023.21 1.ipa
-> ideviceinstaller.exe -i tonbu11.1.0.ipa
-```
 以上命令安装好，直接在手机屏幕上找到三个app 打开，检测是否需要输入apple id和密码，手机授权之后，需要在次测试，只能把把手机还原到初厂设置，具体操作是【设置】，【通用】，【传输或还原iPhone】，【抹掉所有内容和设置】。
