@@ -177,6 +177,7 @@ namespace aid2{
 		CFRelease(sKey);
 		CFRelease(arrSyncedDataclasses);
 
+		ATHostConnectionSendHostInfo(m_ath, dictHostInfo);
 		ATHostConnectionSendPowerAssertion(m_ath, kCFBooleanFalse);
 		CFRelease(dictHostInfo);
 

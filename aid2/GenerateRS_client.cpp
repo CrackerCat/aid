@@ -1,5 +1,7 @@
-#include "GenerateRS_client.h"
 #include<fstream>
+#include "Logger.h"
+#include "GenerateRS_client.h"
+
 namespace aid2 {
     using grpc::ClientContext;
     using grpc::Status;
@@ -38,7 +40,7 @@ namespace aid2 {
             return reply.ret();
         }
         else {
-            std::cout << status.error_code() << ": " << status.error_message() << std::endl;
+            logger.log("grpc调用错误：错误代码%d，错误信息%s", status.error_code(), status.error_message().c_str());
             return false;
         }
     }
@@ -74,7 +76,7 @@ namespace aid2 {
             return reply.ret();
         }
         else {
-            std::cout << status.error_code() << ": " << status.error_message() << std::endl;
+            logger.log("grpc调用错误：错误代码%d，错误信息%s", status.error_code(), status.error_message().c_str());
             return false;
         }
     }
