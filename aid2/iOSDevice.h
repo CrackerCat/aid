@@ -110,7 +110,7 @@ namespace aid2{
 		// 以下是手机获取到的信息
 		string m_udid = "";  //存的udid 
 		string m_fair_play_certificate;   // domain: com.apple.mobile.iTunes key: FairPlayCertificate   存的bytes
-		__int64 m_fair_play_device_type=0;   //domain: com.apple.mobile.iTunes  key: FairPlayDeviceType+KeyTypeSupportVersion
+		uint64_t m_fair_play_device_type=0;   //domain: com.apple.mobile.iTunes  key: FairPlayDeviceType+KeyTypeSupportVersion
 		string m_deviceName = "";
 		string m_productType = "";
 		// 安装应用回调处理函数

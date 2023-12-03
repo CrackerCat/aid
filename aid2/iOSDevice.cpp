@@ -63,7 +63,12 @@ namespace aid2{
 			sKey = CFStringCreateWithCString(NULL, "KeyTypeSupportVersion", kCFStringEncodingUTF8);
 			sValue = AMDeviceCopyValue(m_deviceHandle, sDomain, sKey);
 			CFRelease(sKey);
-			CFNumberGetValue(sValue, kCFNumberSInt32Type, (void*)(((__int64)&m_fair_play_device_type) + 4));
+			uint64_t SupportVersion = 0;
+			CFNumberGetValue(sValue, kCFNumberSInt32Type, &SupportVersion);
+
+			SupportVersion <<= 32;
+			m_fair_play_device_type |= SupportVersion;
+			
 			CFRelease(sValue);
 			CFRelease(sDomain);
 			StopSession();
