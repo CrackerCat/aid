@@ -5,9 +5,9 @@
 char gudid[41];
 
 // 设置成自动授权 事件通知回调函数
-void ReadAuthorizeInfo(const char* udid, const char* DeviceName, const char* ProductType, AuthorizeReturnStatus ReturnFlag)
+void ReadAuthorizeInfo(const char* udid,  AuthorizeReturnStatus ReturnFlag)
 {
-	std::cout << "iOS设备，udid:" << udid << " 设备名:" << DeviceName;
+	std::cout << "iOS设备，udid:" << udid ;
 	switch (ReturnFlag)
 	{
 	case AuthorizeReturnStatus::AuthorizeDopairingLocking:
@@ -26,11 +26,12 @@ void ReadAuthorizeInfo(const char* udid, const char* DeviceName, const char* Pro
 }
 
 // 插入连接事件
-void Connecting(const char* udid, const char* DeviceName, const char* ProductType)
+void Connecting(const char* udid, const char* DeviceName, const char* ProductType, const char* DeviceEnclosureColor, const char* MarketingName, long long TotalDiskCapacity)
 {
-	std::cout << "Connecting udid:" << udid << ',' << DeviceName << ',' << ProductType << std::endl;
-	strcpy_s(gudid,strlen(udid)+1, udid);
+	std::cout << "Connecting udid:" << udid << ',' << DeviceName << ',' << ProductType << ", " << DeviceEnclosureColor << ", " << MarketingName << ", " << TotalDiskCapacity << std::endl;
+	strcpy_s(gudid, strlen(udid) + 1, udid);
 }
+
 
 // 断开事件
 void Distinct(const char* udid)
@@ -73,10 +74,10 @@ void Do(char * ipaPath)
 
 int main(int argc, char* argv[], char* envp[])
 {
-	RegisterAuthorizeCallback(ReadAuthorizeInfo); //注册信任,结果通知事件回调函数
+	//RegisterAuthorizeCallback(ReadAuthorizeInfo); //注册信任,结果通知事件回调函数
 	RegisterInstallCallback(InstallApplicationInfo);  //安装ipa 回调函数
 	RegisterConnectCallback(Connecting);		// 连接回调函数
 	RegisterDisconnectCallback(Distinct);		// 断开事件
-	Do(argv[1]);
-	//autoDo(argv[1]);
+	//Do(argv[1]);
+	autoDo(argv[1]);
 }
