@@ -1,14 +1,17 @@
 #include <stdio.h>
 #include <iostream>
 #include<map>
-#include "aid2.h"
-#include "iOSDevice.h"
+#include <future>
+#include "iOSDeviceInfo.h"
+#include "iOSApplication.h"
+#include "ATH.h"
 #include "GenerateRS_client.h"
 #include "Logger.h"
+#include "aid2.h"
 
 using namespace std;
 using namespace aid2;
-static map<string, iOSDevice *> gudid;
+static map<string, AMDeviceRef> gudid;
 static bool gautoAuthorize = true;
 static char* gipaPath;
 static map<string,future<void>> gmapfut;
@@ -18,6 +21,10 @@ static CFRunLoopRef grunLoop;
 static ConnectCallbackFunc ConnectCallback = nullptr;
 // 断开连接回调函数指针变量
 static DisconnectCallbackFunc  DisconnectCallback = nullptr;
+static AuthorizeDeviceCallbackFunc DoPairCallback = nullptr;
+
+
+
 
 void device_notification_callback(struct AMDeviceNotificationCallbackInformation* CallbackInfo)
 {
@@ -26,39 +33,40 @@ void device_notification_callback(struct AMDeviceNotificationCallbackInformation
 	{
 		case ADNCI_MSG_CONNECTECD:
 		{
-			auto apple_device = new iOSDevice(deviceHandle);
-			if (apple_device->GetInterfaceType() == ConnectMode::USB)  //	
+			if((ConnectMode)AMDeviceGetInterfaceType(deviceHandle)== ConnectMode::USB)
 			{
-				string udid = apple_device->udid();
+				string udid = getUdid(deviceHandle);
 				if (udid.length() > 24) {  //只有取到udid
-					gudid[udid] = apple_device;
+					gudid[udid] = deviceHandle;
+					auto appleInfo = iOSDeviceInfo(deviceHandle);
 					// 连接回调
-					ConnectCallback(udid.c_str(), apple_device->DeviceName().c_str(), apple_device->ProductType().c_str());
+					if (ConnectCallback) { // 连接回调
+						ConnectCallback(udid.c_str(),
+							appleInfo.DeviceName().c_str(),
+							appleInfo.ProductType().c_str(),
+							appleInfo.DeviceEnclosureColor().c_str(),
+							appleInfo.MarketingName().c_str(),
+							appleInfo.TotalDiskCapacity()
+						);
+					}
 					logger.log("Start Device.");
 					logger.log("Device %p connected,udid:%s", deviceHandle, udid.c_str());
 					if (gautoAuthorize)   //自动授权
 					{
-						gmapfut[udid] = async(launch::async, [udid, apple_device] {  //授权异步执行
-							auto ret = AuthorizeDevice(udid.c_str());
-							string deviceName = apple_device->DeviceName();
-							string productType = apple_device->ProductType();
-							if(iOSDevice::DoPairCallback)
-								iOSDevice::DoPairCallback( udid.c_str(),deviceName.c_str(),productType.c_str(), ret ? AuthorizeReturnStatus::AuthorizeSuccess : AuthorizeReturnStatus::AuthorizeFailed );
+						gmapfut[udid] = async(launch::async, [udid, deviceHandle] {  //授权异步执行
+							auto ret = AuthorizeDeviceEx(deviceHandle);
+							if (iOSDeviceInfo::DoPairCallback)
+								iOSDeviceInfo::DoPairCallback(udid.c_str(), ret ? AuthorizeReturnStatus::AuthorizeSuccess : AuthorizeReturnStatus::AuthorizeFailed);
 							if (gipaPath) {
-								auto retInstall = apple_device->InstallApplication(gipaPath);
-								if(iOSDevice::InstallApplicationCallback)
-									iOSDevice::InstallApplicationCallback(retInstall ? "success" : "fail", 100);
+								iOSApplication iosinstall(deviceHandle);
+								auto retInstall = iosinstall.Install(gipaPath);
 							}
 						});
 					}
 				}
-				else {
-					delete apple_device;
-				}
 			}
 			else
 			{
-				delete apple_device;
 				logger.log("不处理USB以外连接设备 %p 进行connect.", deviceHandle);
 			}
 			break; 
@@ -68,14 +76,14 @@ void device_notification_callback(struct AMDeviceNotificationCallbackInformation
 			string udid;
 			for (auto it : gudid)
 			{
-				if (it.second->DeviceRef() == deviceHandle)
+				if (it.second == deviceHandle)
 				{
 					udid = it.first;
 					break;
 				}
 			}
 			if (udid.length() > 24) {  //只有取到udid
-				if (gudid[udid]->GetInterfaceType() == ConnectMode::USB)  //只有usb 设置才discount
+				if ((ConnectMode)AMDeviceGetInterfaceType(gudid[udid]) == ConnectMode::USB)  //只有usb 设置才discount
 				{
 					gmapfut[udid].wait();
 					delete gudid[udid];
@@ -139,6 +147,92 @@ bool StopListen()
 	return true;
 }
 
+bool AuthorizeDeviceEx(void* deviceHandle)
+{
+	iOSDeviceInfo appleInfo((AMDeviceRef)deviceHandle);
+
+	if (!appleInfo.DoPair()) {
+		logger.log("信认失败或没有通过。");
+		return false;
+	};
+	//RemoteGetGrappa   async call
+	aidClient* client = aidClient::NewInstance((AMDeviceRef)deviceHandle);
+	string remote_grappa = string();
+	string grappa = string();
+	// 异步生成Grappa数据
+	auto rggret = async(std::launch::async, [client, &remote_grappa]() {
+		return client->GenerateGrappa(remote_grappa);
+		}
+	);
+
+	try
+	{
+		string udid = getUdid((AMDeviceRef)deviceHandle);
+		ATH ath = ATH(udid);  //new出同步实例
+		if (!ath.SyncAllowed()) {  //允许同步
+			logger.log("udid:%s,SyncAllowed message read failed.", udid.c_str());
+			delete client;
+			return false;
+		}
+		logger.log("udid:%s,SyncAllowed message read success.", udid.c_str());
+		if (!rggret.get()) //等待Grappa数据生成
+		{
+			logger.log("udid:%s,RemoteGetGrappa failed.", udid.c_str());
+			delete client;
+			return false;
+		}
+		logger.log("udid:%s,RemoteGetGrappa success.", udid.c_str());
+		//请求生成同步信息
+		if (!ath.RequestingSync(remote_grappa)) {
+			logger.log("udid:%s,RequestingSync failed.", udid.c_str());
+			delete client;
+			return false;
+		};
+		logger.log("udid:%s,RequestingSync success.", udid.c_str());
+		// 获取请求同步状态数据
+		if (!ath.ReadyForSync(grappa)) {
+			logger.log("udid:%s,ReadyForSync message read failed.\n", udid.c_str());
+			delete client;
+			return false;
+		}
+		logger.log("udid:%s,ReadyForSync message read success.", udid.c_str());
+		if (!client->GenerateRs(grappa))	//调用远程服务器指令生成afsync.rs和afsync.rs.sig文件
+		{
+			logger.log("udid:%s,GenerateRs failed.", udid.c_str());
+			delete client;
+			return false;
+		}
+		logger.log("udid:%s,GenerateRs success.", udid.c_str());
+		//模拟itunes完成同步指令
+		if (!ath.FinishedSyncingMetadata())
+		{
+			logger.log("udid:%s,FinishedSyncingMetadata failed.", udid.c_str());
+			delete client;
+			return false;
+
+		}
+		logger.log("udid:%s,FinishedSyncingMetadata success.", udid.c_str());
+		//读取同步状态
+		if (!ath.SyncFinished())
+		{
+			logger.log("udid:%s,SyncFinished message read SyncFailed.", udid.c_str());
+			delete client;
+			return false;
+
+		}
+		logger.log("udid:%s,SyncFinished message read SyncFinished.", udid.c_str());
+		delete client;
+		return true;
+	}
+	catch (const char* e)
+	{
+		logger.log(e);
+		delete client;
+		return false;
+	}
+}
+
+
 bool AuthorizeDevice(const char * udid) {
 	int i = 0;
 	bool ret = true;
@@ -152,87 +246,27 @@ bool AuthorizeDevice(const char * udid) {
 			return false;
 		}
 	}
-	auto apple_device = gudid.at(udid);
-	if (!apple_device->DoPair()) {
+	auto deviceHandle = gudid.at(udid);
+	return AuthorizeDeviceEx(deviceHandle);
+}
+
+
+bool InstallApplicationEx(void* deviceHandle, const char* ipaPath)
+{
+	iOSDeviceInfo appleInfo((AMDeviceRef)deviceHandle);
+
+	if (!appleInfo.DoPair()) {
 		logger.log("信认失败或没有通过。");
 		return false;
 	};
 
+	iOSApplication iosapp = iOSApplication((AMDeviceRef)deviceHandle);
 
-	//RemoteGetGrappa   async call
-	aidClient* client = aidClient::Instance();
-	string grappa = string();
-	unsigned long grappa_session_id = 0;
-	auto rggret = async(std::launch::async, [client, udid, &grappa,&grappa_session_id](){
-			return client->RemoteGetGrappa(udid, grappa, grappa_session_id);
-		}
-	);
-	// athostconnect
-	auto connRet = apple_device->ATHostConnection();
-	logger.log( "ATHostConnection(),返回值:%s,udid:%s" , connRet ? "True" : "False",udid);
-	if (!connRet) {
-		return false;
-	}
-	//开户另外一个异步去读取，最长时间为10秒
-	future<bool> fut = async(std::launch::async, [apple_device]() {return apple_device->ReceiveMessage(10000); });
-	apple_device->OpenIOSFileSystem(); //打开afc 文件系统
-	apple_device->DeleteAfsyncRq();  //删除手机里的AfsyncRq文件
-	// 设置定时器
-	auto startTime = chrono::high_resolution_clock::now();
-	chrono::milliseconds durationMs;
-	do{
-		this_thread::sleep_for(chrono::milliseconds(1));	
-		durationMs = chrono::duration_cast<std::chrono::milliseconds>(chrono::high_resolution_clock::now() - startTime);
-	} while (!apple_device->athostMessage.SyncAllowed and durationMs.count() < 4000);  //等另外一个线程读取允许同步，4秒没有读取失败处理
-	if (apple_device->athostMessage.SyncAllowed) {  //允许同步
-		logger.log("udid:%s,SyncAllowed message read success.", udid);
-		if (rggret.get())
-		{
-			logger.log("udid:%s,RemoteGetGrappa success.", udid);
-			apple_device->SendSyncRequest(SYNC_KEYBAG, grappa);  //发起同步请求
-		}
-		else
-		{
-			logger.log("udid:%s,RemoteGetGrappa failed", udid);
-			ret = false;
-		}
-	}
-	else {
-		logger.log("udid:%s,SyncAllowed message read failed.", udid);
-		ret = false;
-	}
-	if (ret)
-	{
-		startTime = chrono::high_resolution_clock::now();
-		do{
-			this_thread::sleep_for(chrono::milliseconds(1));
-			durationMs = chrono::duration_cast<std::chrono::milliseconds>(chrono::high_resolution_clock::now() - startTime);
-		} while (!apple_device->athostMessage.ReadyForSync and durationMs.count() < 3000); //等别外一个线程读取允许同步，3秒没有读取失败处理
-		if (apple_device->athostMessage.ReadyForSync)
-		{
-			logger.log("udid:%s,ReadyForSync message read success.", udid);
-			// RemoteGetrs文件
-			string rs, rs_sig;
-			client->RemoteGetRs(apple_device, grappa_session_id, rs, rs_sig);  // 把手机信息发到remote签发rs文件
-			apple_device->WriteAfsyncRs(rs, rs_sig);
-			apple_device->SendMetadataSyncFinished(SYNC_FINISHED_2_KEYBAG); //最后完成同步请求
-		}
-		else {
-			logger.log("udid:%s,ReadyForSync message read failed.", udid);
-			ret = false;
-		}
-	}
-	apple_device->CloseIOSFileSystem();
-	if (!fut.get()) //获取读取线程结果
-	{
-		logger.log("udid:%s,AuthorizeDevice ReceiveMessage failed.", udid);
-		ret = false;
-	}
-	apple_device->ATHostDisconnect();
-	logger.log("udid:%s,ATHostDisconnect success.", udid);
-	return ret;
+	auto retInstall = iosapp.Install(ipaPath);
+	if (iOSApplication::InstallCallback)
+		iOSApplication::InstallCallback(retInstall ? "success" : "fail", 100);
+	return retInstall;
 }
-
 
 bool InstallApplication(const char* udid, const char* ipaPath) {
 	int i = 0;
@@ -246,26 +280,19 @@ bool InstallApplication(const char* udid, const char* ipaPath) {
 			return false;
 		}
 	}
-	auto apple_device = gudid.at(udid);
-	if (!apple_device->DoPair()) {
-		logger.log("信认失败或没有通过。");
-		return false;
-	};
-	auto retInstall = apple_device->InstallApplication(ipaPath);
-	if(iOSDevice::InstallApplicationCallback)
-		iOSDevice::InstallApplicationCallback(retInstall ? "success" : "fail", 100);
-	return retInstall;
+	auto deviceHandle = gudid.at(udid);
+	return InstallApplicationEx(deviceHandle, ipaPath);
 }
 
 
 //注册授权回调函数，授权过程中需要配对信息和授权结果通过回调函数通知
 void RegisterAuthorizeCallback(AuthorizeDeviceCallbackFunc callback) {
-	iOSDevice::DoPairCallback = callback;
+	iOSDeviceInfo::DoPairCallback = callback;
 }
 
 //注册安装回调函数，授权过程中需要配对信息和授权结果通过回调函数通知
 void RegisterInstallCallback(InstallApplicationFunc callback) {
-	iOSDevice::InstallApplicationCallback = callback;
+	iOSApplication::InstallCallback = callback;
 }
 
 void RegisterConnectCallback(ConnectCallbackFunc callback)

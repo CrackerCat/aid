@@ -19,17 +19,18 @@
       <Filter>iTunesApi</Filter>
     </ClInclude>
     <ClInclude Include="aid2.h" />
-    <ClInclude Include="iOSDevice.h" />
     <ClInclude Include="..\ProtoBuf\GenerateRS\GenerateRS.grpc.pb.h">
       <Filter>ProtoBuf</Filter>
     </ClInclude>
     <ClInclude Include="..\ProtoBuf\GenerateRS\GenerateRS.pb.h">
       <Filter>ProtoBuf</Filter>
     </ClInclude>
-    <ClInclude Include="GenerateRS_client.h">
-      <Filter>ProtoBuf</Filter>
-    </ClInclude>
     <ClInclude Include="Logger.h" />
+    <ClInclude Include="ATH.h" />
+    <ClInclude Include="Afsync.h" />
+    <ClInclude Include="iOSDeviceInfo.h" />
+    <ClInclude Include="iOSApplication.h" />
+    <ClInclude Include="GenerateRS_client.h" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="iTunesApi\helper.cpp">
@@ -43,17 +44,18 @@
     </ClCompile>
     <ClCompile Include="dllmain.cpp" />
     <ClCompile Include="aid2.cpp" />
-    <ClCompile Include="iOSDevice.cpp" />
     <ClCompile Include="..\ProtoBuf\GenerateRS\GenerateRS.grpc.pb.cc">
       <Filter>ProtoBuf</Filter>
     </ClCompile>
     <ClCompile Include="..\ProtoBuf\GenerateRS\GenerateRS.pb.cc">
       <Filter>ProtoBuf</Filter>
     </ClCompile>
-    <ClCompile Include="GenerateRS_client.cpp">
-      <Filter>ProtoBuf</Filter>
-    </ClCompile>
     <ClCompile Include="Logger.cpp" />
+    <ClCompile Include="ATH.cpp" />
+    <ClCompile Include="Afsync.cpp" />
+    <ClCompile Include="iOSDeviceInfo.cpp" />
+    <ClCompile Include="iOSApplication.cpp" />
+    <ClCompile Include="GenerateRS_client.cpp" />
   </ItemGroup>
   <ItemGroup>
     <None Include="aid2.def" />

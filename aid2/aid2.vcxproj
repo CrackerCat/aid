@@ -163,8 +163,11 @@
   <ItemGroup>
     <ClInclude Include="..\ProtoBuf\GenerateRS\GenerateRS.grpc.pb.h" />
     <ClInclude Include="..\ProtoBuf\GenerateRS\GenerateRS.pb.h" />
+    <ClInclude Include="Afsync.h" />
+    <ClInclude Include="ATH.h" />
     <ClInclude Include="GenerateRS_client.h" />
-    <ClInclude Include="iOSDevice.h" />
+    <ClInclude Include="iOSApplication.h" />
+    <ClInclude Include="iOSDeviceInfo.h" />
     <ClInclude Include="iTunesApi\iTunesApi.h" />
     <ClInclude Include="iTunesApi\simpleApi.h" />
     <ClInclude Include="iTunesApi\unkonwStruct.h" />
@@ -174,9 +177,12 @@
   <ItemGroup>
     <ClCompile Include="..\ProtoBuf\GenerateRS\GenerateRS.grpc.pb.cc" />
     <ClCompile Include="..\ProtoBuf\GenerateRS\GenerateRS.pb.cc" />
+    <ClCompile Include="Afsync.cpp" />
+    <ClCompile Include="ATH.cpp" />
     <ClCompile Include="dllmain.cpp" />
     <ClCompile Include="GenerateRS_client.cpp" />
-    <ClCompile Include="iOSDevice.cpp" />
+    <ClCompile Include="iOSApplication.cpp" />
+    <ClCompile Include="iOSDeviceInfo.cpp" />
     <ClCompile Include="iTunesApi\helper.cpp" />
     <ClCompile Include="iTunesApi\iTunesApi.cpp" />
     <ClCompile Include="iTunesApi\simpleApi.cpp" />

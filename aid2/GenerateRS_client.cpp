@@ -1,6 +1,9 @@
 #include<fstream>
 #include "Logger.h"
 #include "GenerateRS_client.h"
+#include "Afsync.h"
+#include "iOSDeviceInfo.h"
+
 
 namespace aid2 {
     using grpc::ClientContext;
@@ -24,85 +27,106 @@ namespace aid2 {
         return contents;
     }
 
+    aidClient::aidClient(std::shared_ptr<Channel> channel, AMDeviceRef deviceHandle)
+        : stub_(aid::NewStub(channel))
+    {
+        this->m_deviceHandle = deviceHandle;
+        this->m_udid = getUdid(m_deviceHandle);
+    }
 
-    bool aidClient::RemoteGetGrappa(string udid, std::string& grappa, unsigned long& grappa_session_id) {
+     bool aidClient::GenerateGrappa(string& grappa)
+    {
         rqGeneGrappa request;
-        request.set_udid(udid.c_str(), udid.length());
+        request.set_udid(m_udid.c_str(), m_udid.size());
         Grappa reply;
         ClientContext context;
-
+        bool ret = false;
         // The actual RPC.
         Status status = stub_->GenerateGrappa(&context, request, &reply);
 
         if (status.ok()) {
-            grappa = reply.grappadata();
-            grappa_session_id = reply.grappa_session_id();
-            return reply.ret();
+            if (reply.ret()) {
+                grappa = reply.grappadata();
+                m_grappa_session_id = reply.grappa_session_id();
+                ret = true;
+            }
+            else {
+                logger.log("CreateHostGrappa error");
+            }
         }
         else {
             logger.log("grpc调用错误：错误代码%d，错误信息%s", status.error_code(), status.error_message().c_str());
-            return false;
         }
+        return ret;
     }
 
-    bool aidClient::RemoteGetRs(iOSDevice* const pDevice, unsigned long grappa_session_id, string& rs, string& rs_sig) {
-        string rq_data, rq_sig_data;
-        pDevice->ReadAfsyncRq(rq_data, rq_sig_data);
-
-        // Data we are sending to the server.
-        RemoteDeviceInfo request;
-        request.set_rq_data(rq_data.data(), rq_data.size());
-        request.set_rq_sig_data(rq_sig_data.data(), rq_sig_data.size());
-        request.set_grappa_session_id(grappa_session_id);
-        //request.set_key_fair_play_guid("",0);  //?
-        request.set_fair_play_certificate(pDevice->FairPlayCertificate().data(), pDevice->FairPlayCertificate().size());
-        request.set_fair_device_type(pDevice->FairPlayDeviceType());
-        //request.set_private_key(0);  //?
-        request.set_fair_play_guid(pDevice->udid().c_str(), pDevice->udid().size());
-        request.set_grappa(pDevice->athostMessage.grappa.data(), pDevice->athostMessage.grappa.size());;
-        // Container for the data we expect from the server.
-        rsdata reply;
-    
-        // Context for the client. It could be used to convey extra information to
-        // the server and/or tweak certain RPC behaviors.
-        ClientContext context;
-    
-        // The actual RPC.
-        Status status = stub_->GenerateRS(&context, request, &reply);
-        
-        if (status.ok()) {
-            rs =  reply.rs_data();
-            rs_sig = reply.rs_sig_data();
-            return reply.ret();
-        }
-        else {
-            logger.log("grpc调用错误：错误代码%d，错误信息%s", status.error_code(), status.error_message().c_str());
-            return false;
-        }
-    }
-
-    aidClient* aidClient::Instance() {
+    bool aidClient::GenerateRs(const string& grappa)
+    {
+        //读取rq和rq_sid文件   
+        try
         {
-            static aidClient* client;
-            if (!client) {
-                auto rootcert = get_file_contents(rootcert_path);
-                auto clientkey = get_file_contents(clientkey_path);
-                auto clientcert = get_file_contents(clientcert_path);
-                grpc::SslCredentialsOptions ssl_opts;
-                ssl_opts.pem_root_certs = rootcert;
-                ssl_opts.pem_private_key = clientkey;
-                ssl_opts.pem_cert_chain = clientcert;
-                std::shared_ptr<grpc::ChannelCredentials> creds = grpc::SslCredentials(ssl_opts);
+            iOSDeviceInfo appleInfo(m_deviceHandle);
+            appleInfo.DoPair();
+            Afsync afsync(m_deviceHandle);
+            string rq_data = afsync.ReadRq();
+            string rq_sig_data = afsync.ReadRqSig();
+            
+            bool ret = false;
 
+            // 通过远程服务器来生成afsync.rs和afsync.rs.sig 文件内容
+            RemoteDeviceInfo request;
+            request.set_rq_data(rq_data.data(), rq_data.size());
+            request.set_rq_sig_data(rq_sig_data.data(), rq_sig_data.size());
+            request.set_grappa_session_id(m_grappa_session_id);
+            request.set_fair_play_certificate(appleInfo.FairPlayCertificate().data(), appleInfo.FairPlayCertificate().size());
+            request.set_fair_device_type(appleInfo.FairPlayDeviceType());
+            request.set_fair_play_guid(m_udid.c_str(), m_udid.size());
+            request.set_grappa(grappa.data(), grappa.size());;
+            // Container for the data we expect from the server.
+            rsdata reply;
 
-                aidClient* new_client = new aidClient(grpc::CreateChannel("aid.aidserv.cn:50051", creds));
-                if (InterlockedCompareExchangePointer(reinterpret_cast<PVOID*>(&client), new_client, NULL)) {
-                    delete new_client;
+            // Context for the client. It could be used to convey extra information to
+            // the server and/or tweak certain RPC behaviors.
+            ClientContext context;
+
+            // The actual RPC.
+            Status status = stub_->GenerateRS(&context, request, &reply);
+            // 如果获取到了afsync.rs和afsync.rs.sig 文件，就写入到手机/AirFair/sync/目录下面
+            if (status.ok()) {
+                if (reply.ret()) {
+                    afsync.WriteRs(reply.rs_data());
+                    afsync.WriteRsSig(reply.rs_sig_data());
+                    ret = true;
+                }
+                else
+                {
+                    logger.log("udid:%s genreate rs failed!", m_udid.c_str());
                 }
             }
-            return client;
+            else {
+                logger.log("grpc调用错误：错误代码%d，错误信息%s", status.error_code(), status.error_message().c_str());
+            }
+            return ret;
+        }
+        catch (const char* e)
+        {
+            logger.log(e);
+            return false;
         }
     }
 
-
+    aidClient* aidClient::NewInstance(AMDeviceRef deviceHandle)
+    {
+        {
+            auto rootcert = get_file_contents(rootcert_path);
+            auto clientkey = get_file_contents(clientkey_path);
+            auto clientcert = get_file_contents(clientcert_path);
+            grpc::SslCredentialsOptions ssl_opts;
+            ssl_opts.pem_root_certs = rootcert;
+            ssl_opts.pem_private_key = clientkey;
+            ssl_opts.pem_cert_chain = clientcert;
+            std::shared_ptr<grpc::ChannelCredentials> creds = grpc::SslCredentials(ssl_opts);
+            return new aidClient(grpc::CreateChannel("aid.aidserv.cn:50051", creds), deviceHandle);
+        }
+    }
 }

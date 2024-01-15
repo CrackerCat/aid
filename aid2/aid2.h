@@ -17,10 +17,10 @@ enum AuthorizeReturnStatus
 	AuthorizeDopairingNotTrust = 4  //执行配对中使用者按下不信任
 };
 
-typedef void (*AuthorizeDeviceCallbackFunc)(const char* udid, const char* DeviceName, const char* ProductType, AuthorizeReturnStatus ReturnFlag);//授权回调函数定义
+typedef void (*AuthorizeDeviceCallbackFunc)(const char* udid, AuthorizeReturnStatus ReturnFlag);//授权回调函数定义
 typedef void (*InstallApplicationFunc)(const char* status, const int percent);//安装函数回调定义
-typedef void (*ConnectCallbackFunc)(const char* udid,const char* DeviceName, const char* ProductType);//安装函数回调定义
-typedef void (*DisconnectCallbackFunc)(const char* udid);//安装函数回调定义
+typedef void (*ConnectCallbackFunc)(const char* udid, const char* DeviceName, const char* ProductType, const char* DeviceEnclosureColor, const char* MarketingName, long long TotalDiskCapacity);//连接函数回调定义
+typedef void (*DisconnectCallbackFunc)(const char* udid);//断开设备连接回调定义
 
 /*******************************************************
 以线程方式开户监听，不阻塞主线程
@@ -34,12 +34,31 @@ extern "C" AID2_API bool StartListen(bool autoAuthorize=true,const char * ipaPat
 返回值：成功为true
 **************************************************/
 extern "C" AID2_API bool StopListen();
+
+/*******************************************************
+根据deviceHandle授权
+参数：deviceHandle
+返回值：成功为true
+*******************************************************/
+extern "C" AID2_API bool AuthorizeDeviceEx(void* deviceHandle);
+
+
 /*******************************************************
 根据udid授权
 参数：udid
 返回值：成功为true
 *******************************************************/
 extern "C" AID2_API bool AuthorizeDevice(const char * udid);
+
+
+/*******************************************************
+根据udid安装path 的ipa 包
+参数：deviceHandle
+	  ipaPath ipa包的路径
+返回值：成功为true
+*******************************************************/
+extern "C" AID2_API bool InstallApplicationEx(void* deviceHandle, const char* ipaPath);
+
 
 /*******************************************************
 根据udid安装path 的ipa 包
