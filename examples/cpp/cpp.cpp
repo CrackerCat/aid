@@ -64,8 +64,8 @@ void autoDo(char* ipaPath)
 void Do(char * ipaPath)
 {
 	StartListen(false);
-	//auto ret = AuthorizeDevice(gudid);
-	//std::cout << "iOS设备，udid:" << gudid << (ret ? " 授权成功" : " 授权失败") << std::endl;
+	auto ret = AuthorizeDevice(gudid);
+	std::cout << "iOS设备，udid:" << gudid << (ret ? " 授权成功" : " 授权失败") << std::endl;
 	//auto retInstall = InstallApplication(gudid, ipaPath);
 	//std::cout << "iOS设备，udid:" << gudid << " ipa包：" << ipaPath << (retInstall ? " 安装成功" : " 安装失败") << std::endl;
 	std::cout << "按回车键停止..." << std::endl;
@@ -80,6 +80,6 @@ int main(int argc, char* argv[], char* envp[])
 	RegisterInstallCallback(InstallApplicationInfo);  //安装ipa 回调函数
 	RegisterConnectCallback(Connecting);		// 连接回调函数
 	RegisterDisconnectCallback(Distinct);		// 断开事件
-	//Do(argv[1]);
-	autoDo(argv[1]);
+	Do(argv[1]);
+	//autoDo(argv[1]);
 }

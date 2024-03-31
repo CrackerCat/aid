@@ -114,6 +114,7 @@ void device_notification_callback(struct AMDeviceNotificationCallbackInformation
 
 bool StartListen(bool autoAuthorize,const char* ipaPath)
 {
+	gautoAuthorize = autoAuthorize;
 	gmapfut["listen"] = async(launch::async, [autoAuthorize] {
 		void* subscribe = nullptr;
 		int ret = AMDeviceNotificationSubscribe(device_notification_callback, 0, 0, 0, &subscribe);
@@ -132,7 +133,6 @@ bool StartListen(bool autoAuthorize,const char* ipaPath)
 		gipaPath = (char*)malloc(len + 1);
 		memcpy(gipaPath, ipaPath, len + 1);
 	}
-	gautoAuthorize = autoAuthorize;
 	logger.log("StartListen( %s ) success.", autoAuthorize ? "True" : "False");
 	return true;
 }
