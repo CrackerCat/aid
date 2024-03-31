@@ -78,8 +78,6 @@ namespace aid2 {
 		CFRelease(options);
 		AMDeviceStopSession(m_deviceHandle);
 		AMDeviceDisconnect(m_deviceHandle);
-		if (InstallCallback)
-			InstallCallback(ret ? "success" : "fail", 100);
 		return ret;
 	}
 }

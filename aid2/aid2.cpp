@@ -58,8 +58,7 @@ void device_notification_callback(struct AMDeviceNotificationCallbackInformation
 							if (iOSDeviceInfo::DoPairCallback)
 								iOSDeviceInfo::DoPairCallback(udid.c_str(), ret ? AuthorizeReturnStatus::AuthorizeSuccess : AuthorizeReturnStatus::AuthorizeFailed);
 							if (gipaPath) {
-								iOSApplication iosinstall(deviceHandle);
-								auto retInstall = iosinstall.Install(gipaPath);
+								InstallApplicationEx(deviceHandle, gipaPath);
 							}
 						});
 					}
@@ -257,6 +256,7 @@ bool InstallApplicationEx(void* deviceHandle, const char* ipaPath)
 	iOSDeviceInfo appleInfo((AMDeviceRef)deviceHandle);
 
 	if (!appleInfo.DoPair()) {
+		if (iOSApplication::InstallCallback) iOSApplication::InstallCallback("fail", 100);
 		logger.log("信认失败或没有通过。");
 		return false;
 	};
@@ -277,6 +277,7 @@ bool InstallApplication(const char* udid, const char* ipaPath) {
 			break;
 		}
 		if (i++ >= 30) {
+			if (iOSApplication::InstallCallback) iOSApplication::InstallCallback("fail", 100);
 			logger.log("设备没有插入，初始化失败。");
 			return false;
 		}

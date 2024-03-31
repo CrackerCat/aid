@@ -64,10 +64,12 @@ void autoDo(char* ipaPath)
 void Do(char * ipaPath)
 {
 	StartListen(false);
-	auto ret = AuthorizeDevice(gudid);
-	std::cout << "iOS设备，udid:" << gudid << (ret ? " 授权成功" : " 授权失败") << std::endl;
-	auto retInstall = InstallApplication(gudid, ipaPath);
-	std::cout << "iOS设备，udid:" << gudid << " ipa包：" << ipaPath << (retInstall ? " 安装成功" : " 安装失败") << std::endl;
+	//auto ret = AuthorizeDevice(gudid);
+	//std::cout << "iOS设备，udid:" << gudid << (ret ? " 授权成功" : " 授权失败") << std::endl;
+	//auto retInstall = InstallApplication(gudid, ipaPath);
+	//std::cout << "iOS设备，udid:" << gudid << " ipa包：" << ipaPath << (retInstall ? " 安装成功" : " 安装失败") << std::endl;
+	std::cout << "按回车键停止..." << std::endl;
+	std::cin.get();  // 阻止主线程退出
 	StopListen();
 }
 
