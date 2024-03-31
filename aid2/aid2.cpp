@@ -86,7 +86,6 @@ void device_notification_callback(struct AMDeviceNotificationCallbackInformation
 				if ((ConnectMode)AMDeviceGetInterfaceType(gudid[udid]) == ConnectMode::USB)  //只有usb 设置才discount
 				{
 					gmapfut[udid].wait();
-					delete gudid[udid];
 					gmapfut.erase(udid);
 					gudid.erase(udid);
 					DisconnectCallback(udid.c_str());

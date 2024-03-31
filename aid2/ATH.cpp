@@ -15,7 +15,6 @@ namespace aid2 {
 		}
 		CFRelease(sUDID);
 		CFRelease(sLibrary);
-		this->Capabilities();
 	}
 
 	aid2::ATH::~ATH()
@@ -37,7 +36,7 @@ namespace aid2 {
 			CFRelease(sKey);
 			CFRelease(sValue);
 
-			logger.log("udid:ReceiveMessage:%s", sCommand.c_str());
+			logger.log("read SyncAllowed for ReceiveMessage:%s", sCommand.c_str());
 
 			if (sCommand == "SyncAllowed") {
 				bret = true;
@@ -198,24 +197,5 @@ namespace aid2 {
 		}
 		return bret;
 	}
-	bool ATH::Capabilities()
-	{
-		bool bret = false;
-		CFDictionaryRef dict = ATHostConnectionReadMessage(m_ath);
-		//∂¡»°√¸¡Ó––
-		CFStringRef sKey = CFStringCreateWithCString(NULL, "Command", kCFStringEncodingUTF8);
-		CFStringRef sValue = CFDictionaryGetValue(dict, sKey);
-		CFIndex cmd_len = CFStringGetLength(sValue);
-		string sCommand(cmd_len, '\0');
-		CFStringGetCString(sValue, (char*)sCommand.data(), cmd_len + 1, kCFStringEncodingUTF8);
-		CFRelease(sKey);
-		CFRelease(sValue);
-		if (sCommand == "Capabilities") {
-			bret = true;
-		}
-		else {
-			logger.log("read Capabilities status fail.");
-		}
-		return bret;
-	}
+
 }

@@ -50,11 +50,5 @@ namespace aid2 {
 		string m_ComputerName = "pc";
 		string m_Version = "12.6.0.100";
 		ATHRef m_ath = nullptr;
-		/**
-		 * 读取Capabilities状态
-		 *
-		 * @return 读取到为true,否则为flase
-		 */
-		bool Capabilities();
 	};
 }
