@@ -88,7 +88,9 @@ void device_notification_callback(struct AMDeviceNotificationCallbackInformation
 					gmapfut[udid].wait();
 					gmapfut.erase(udid);
 					gudid.erase(udid);
-					DisconnectCallback(udid.c_str());
+					if (DisconnectCallback) {
+						DisconnectCallback(udid.c_str());
+					}
 					logger.log("Device %p disconnected,udid:%s", deviceHandle, udid.c_str());
 				}
 				else
