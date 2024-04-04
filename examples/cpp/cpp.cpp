@@ -1,6 +1,7 @@
 ﻿#include <iostream>
 #include <Windows.h>
 #include "aid2/aid2.h"
+#include <thread>
 
 char gudid[41];
 
@@ -55,7 +56,7 @@ void InstallApplicationInfo(const char* status, const int percent) {
 //自动授权代码示例
 void autoDo(char* ipaPath)
 {
-	StartListen(true,ipaPath);
+	StartListen(true, ipaPath);
 	std::cout << "按回车键停止..." << std::endl;
 	std::cin.get();  // 阻止主线程退出
 	StopListen();
@@ -70,16 +71,16 @@ void Do(char * ipaPath)
 	std::cout << "iOS设备，udid:" << gudid << " ipa包：" << ipaPath << (retInstall ? " 安装成功" : " 安装失败") << std::endl;
 	std::cout << "按回车键停止..." << std::endl;
 	std::cin.get();  // 阻止主线程退出
-	StopListen();
+	//StopListen();
 }
 
 
 int main(int argc, char* argv[], char* envp[])
 {
-	//RegisterAuthorizeCallback(ReadAuthorizeInfo); //注册信任,结果通知事件回调函数
+	RegisterAuthorizeCallback(ReadAuthorizeInfo); //注册信任,结果通知事件回调函数
 	RegisterInstallCallback(InstallApplicationInfo);  //安装ipa 回调函数
 	RegisterConnectCallback(Connecting);		// 连接回调函数
 	RegisterDisconnectCallback(Distinct);		// 断开事件
-	Do(argv[1]);
-	//autoDo(argv[1]);
+	//Do(argv[1]);
+	autoDo(argv[1]);
 }

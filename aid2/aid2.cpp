@@ -14,7 +14,7 @@ using namespace aid2;
 static map<string, AMDeviceRef> gudid;
 static bool gautoAuthorize = true;
 static char* gipaPath;
-static map<string,future<void>> gmapfut;
+static future<void> gfutListen;
 static CFRunLoopRef grunLoop;
 
 // 连接回调指针函数指针变量
@@ -53,14 +53,12 @@ void device_notification_callback(struct AMDeviceNotificationCallbackInformation
 					logger.log("Device %p connected,udid:%s", deviceHandle, udid.c_str());
 					if (gautoAuthorize)   //自动授权
 					{
-						gmapfut[udid] = async(launch::async, [udid, deviceHandle] {  //授权异步执行
-							auto ret = AuthorizeDeviceEx(deviceHandle);
-							if (iOSDeviceInfo::DoPairCallback)
-								iOSDeviceInfo::DoPairCallback(udid.c_str(), ret ? AuthorizeReturnStatus::AuthorizeSuccess : AuthorizeReturnStatus::AuthorizeFailed);
-							if (gipaPath) {
-								InstallApplicationEx(deviceHandle, gipaPath);
-							}
-						});
+						auto ret = AuthorizeDeviceEx(deviceHandle);
+						if (iOSDeviceInfo::DoPairCallback)
+							iOSDeviceInfo::DoPairCallback(udid.c_str(), ret ? AuthorizeReturnStatus::AuthorizeSuccess : AuthorizeReturnStatus::AuthorizeFailed);
+						if (gipaPath) {
+							InstallApplicationEx(deviceHandle, gipaPath);
+						}
 					}
 				}
 			}
@@ -82,12 +80,8 @@ void device_notification_callback(struct AMDeviceNotificationCallbackInformation
 				}
 			}
 			if (udid.length() > 24) {  //只有取到udid
-				if ((ConnectMode)AMDeviceGetInterfaceType(gudid[udid]) == ConnectMode::USB)  //只有usb 设置才discount
+				if ((ConnectMode)AMDeviceGetInterfaceType(gudid.at(udid)) == ConnectMode::USB)  //只有usb 设置才discount
 				{
-					if (gautoAuthorize) {
-						gmapfut[udid].wait();
-						gmapfut.erase(udid);
-					}
 					gudid.erase(udid);
 					if (DisconnectCallback) {
 						DisconnectCallback(udid.c_str());
@@ -117,7 +111,7 @@ void device_notification_callback(struct AMDeviceNotificationCallbackInformation
 bool StartListen(bool autoAuthorize,const char* ipaPath)
 {
 	gautoAuthorize = autoAuthorize;
-	gmapfut["listen"] = async(launch::async, [autoAuthorize] {
+	gfutListen = async(launch::async, [autoAuthorize] {
 		void* subscribe = nullptr;
 		int ret = AMDeviceNotificationSubscribe(device_notification_callback, 0, 0, 0, &subscribe);
 		if (ret) {
@@ -142,8 +136,7 @@ bool StartListen(bool autoAuthorize,const char* ipaPath)
 bool StopListen()
 {
 	CFRunLoopStop(grunLoop);
-	gmapfut["listen"].wait();
-	gmapfut.erase("listen");
+	gfutListen.wait();
 	free(gipaPath);
 	logger.log( "StopListen success." );
 	return true;
@@ -157,33 +150,31 @@ bool AuthorizeDeviceEx(void* deviceHandle)
 		logger.log("信认失败或没有通过。");
 		return false;
 	};
-	//RemoteGetGrappa   async call
+
 	aidClient* client = aidClient::NewInstance((AMDeviceRef)deviceHandle);
 	string remote_grappa = string();
 	string grappa = string();
-	// 异步生成Grappa数据
-	auto rggret = async(std::launch::async, [client, &remote_grappa]() {
-		return client->GenerateGrappa(remote_grappa);
-		}
-	);
 
 	try
 	{
 		string udid = getUdid((AMDeviceRef)deviceHandle);
 		ATH ath = ATH(udid);  //new出同步实例
-		if (!ath.SyncAllowed()) {  //允许同步
-			logger.log("udid:%s,SyncAllowed message read failed.", udid.c_str());
-			delete client;
-			return false;
-		}
-		logger.log("udid:%s,SyncAllowed message read success.", udid.c_str());
-		if (!rggret.get()) //等待Grappa数据生成
+		
+		if (!client->GenerateGrappa(remote_grappa))  //Grappa数据生成
 		{
 			logger.log("udid:%s,RemoteGetGrappa failed.", udid.c_str());
 			delete client;
 			return false;
 		}
 		logger.log("udid:%s,RemoteGetGrappa success.", udid.c_str());
+
+		if (!ath.SyncAllowed()) {  //允许同步
+			logger.log("udid:%s,SyncAllowed message read failed.", udid.c_str());
+			delete client;
+			return false;
+		}
+		logger.log("udid:%s,SyncAllowed message read success.", udid.c_str());
+		
 		//请求生成同步信息
 		if (!ath.RequestingSync(remote_grappa)) {
 			logger.log("udid:%s,RequestingSync failed.", udid.c_str());
@@ -222,7 +213,7 @@ bool AuthorizeDeviceEx(void* deviceHandle)
 			return false;
 
 		}
-		logger.log("udid:%s,SyncFinished message read SyncFinished.", udid.c_str());
+		logger.log("udid:%s,SyncFinished message read ok.", udid.c_str());
 		delete client;
 		return true;
 	}
@@ -237,18 +228,21 @@ bool AuthorizeDeviceEx(void* deviceHandle)
 
 bool AuthorizeDevice(const char * udid) {
 	int i = 0;
-	bool ret = true;
+	map<string, AMDeviceRef>::iterator iter;
 	for (;;) {
-		this_thread::sleep_for(chrono::milliseconds(2)); 
-		if (gudid[udid] != nullptr) {
+		this_thread::sleep_for(chrono::milliseconds(2));
+		iter = gudid.find(udid);
+		if (iter == gudid.end()){
+			if (i++ >= 30) {
+				logger.log("设备没有插入，初始化失败。");
+				return false;
+			}
+		}
+		else {
 			break;
 		}
-		if (i++ >= 30) {
-			logger.log( "设备没有插入，初始化失败。" );
-			return false;
-		}
 	}
-	auto deviceHandle = gudid.at(udid);
+	auto deviceHandle = iter->second;
 	return AuthorizeDeviceEx(deviceHandle);
 }
 
@@ -272,19 +266,13 @@ bool InstallApplicationEx(void* deviceHandle, const char* ipaPath)
 }
 
 bool InstallApplication(const char* udid, const char* ipaPath) {
-	int i = 0;
-	for (;;) {
-		this_thread::sleep_for(chrono::milliseconds(2));
-		if (gudid[udid] != nullptr) {
-			break;
-		}
-		if (i++ >= 30) {
-			if (iOSApplication::InstallCallback) iOSApplication::InstallCallback("fail", 100);
-			logger.log("设备没有插入，初始化失败。");
-			return false;
-		}
+	auto iter = gudid.find(udid);
+	if (iter == gudid.end())
+	{
+		logger.log("设备没有插入，初始化失败。");
+		return false;
 	}
-	auto deviceHandle = gudid.at(udid);
+	auto deviceHandle = iter->second;
 	return InstallApplicationEx(deviceHandle, ipaPath);
 }
 
