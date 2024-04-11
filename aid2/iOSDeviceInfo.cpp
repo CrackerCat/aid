@@ -94,7 +94,7 @@ namespace aid2 {
 		sValue = AMDeviceCopyValue(deviceHandle, NULL, sKey);
 		CFRelease(sKey);
 		len = CFStringGetLength(sValue);
-		m_productType.resize(len);
+		m_deviceEnclosureColor.resize(len);
 		CFStringGetCString(sValue, (char*)m_deviceEnclosureColor.c_str(), len + 1, kCFStringEncodingUTF8);
 		CFRelease(sValue);
 		//MarketingName
@@ -102,7 +102,7 @@ namespace aid2 {
 		sValue = AMDeviceCopyValue(deviceHandle, NULL, sKey);
 		CFRelease(sKey);
 		len = CFStringGetLength(sValue);
-		m_productType.resize(len);
+		m_marketingName.resize(len);
 		CFStringGetCString(sValue, (char*)m_marketingName.c_str(), len + 1, kCFStringEncodingUTF8);
 		CFRelease(sValue);
 		

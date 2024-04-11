@@ -27,9 +27,9 @@ void ReadAuthorizeInfo(const char* udid,  AuthorizeReturnStatus ReturnFlag)
 }
 
 // 插入连接事件
-void Connecting(const char* udid, const char* DeviceName, const char* ProductType, const char* DeviceEnclosureColor, const char* MarketingName, long long TotalDiskCapacity)
+void Connecting(const char* udid, const char* DeviceName, const char* ProductType, const char* DeviceEnclosureColor, const char* MarketingName)
 {
-	std::cout << "Connecting udid:" << udid << ',' << DeviceName << ',' << ProductType << ", " << DeviceEnclosureColor << ", " << MarketingName << ", " << TotalDiskCapacity << std::endl;
+	std::cout << "Connecting udid:" << udid << ',' << DeviceName << ',' << ProductType << ", " << DeviceEnclosureColor << ", " << MarketingName << std::endl;
 	strcpy_s(gudid, strlen(udid) + 1, udid);
 }
 

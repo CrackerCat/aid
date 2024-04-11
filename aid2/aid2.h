@@ -19,7 +19,7 @@ enum AuthorizeReturnStatus
 
 typedef void (*AuthorizeDeviceCallbackFunc)(const char* udid, AuthorizeReturnStatus ReturnFlag);//授权回调函数定义
 typedef void (*InstallApplicationFunc)(const char* status, const int percent);//安装函数回调定义
-typedef void (*ConnectCallbackFunc)(const char* udid, const char* DeviceName, const char* ProductType, const char* DeviceEnclosureColor, const char* MarketingName, long long TotalDiskCapacity);//连接函数回调定义
+typedef void (*ConnectCallbackFunc)(const char* udid, const char* DeviceName, const char* ProductType, const char* DeviceEnclosureColor, const char* MarketingName);//连接函数回调定义
 typedef void (*DisconnectCallbackFunc)(const char* udid);//断开设备连接回调定义
 
 /*******************************************************

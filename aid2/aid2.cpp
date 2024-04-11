@@ -45,8 +45,7 @@ void device_notification_callback(struct AMDeviceNotificationCallbackInformation
 							appleInfo.DeviceName().c_str(),
 							appleInfo.ProductType().c_str(),
 							appleInfo.DeviceEnclosureColor().c_str(),
-							appleInfo.MarketingName().c_str(),
-							appleInfo.TotalDiskCapacity()
+							appleInfo.MarketingName().c_str()
 						);
 					}
 					logger.log("Start Device.");
