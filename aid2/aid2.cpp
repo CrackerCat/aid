@@ -29,82 +29,68 @@ static AuthorizeDeviceCallbackFunc DoPairCallback = nullptr;
 void device_notification_callback(struct AMDeviceNotificationCallbackInformation* CallbackInfo)
 {
 	AMDeviceRef deviceHandle = CallbackInfo->deviceHandle;
-	switch (CallbackInfo->msgType)
+	if ((ConnectMode)AMDeviceGetInterfaceType(deviceHandle) == ConnectMode::USB)
 	{
-		case ADNCI_MSG_CONNECTECD:
+		switch (CallbackInfo->msgType)
 		{
-			if((ConnectMode)AMDeviceGetInterfaceType(deviceHandle)== ConnectMode::USB)
+			case ADNCI_MSG_CONNECTECD:
 			{
 				string udid = getUdid(deviceHandle);
-				if (udid.length() > 24) {  //只有取到udid
-					gudid[udid] = deviceHandle;
-					auto appleInfo = iOSDeviceInfo(deviceHandle);
-					// 连接回调
-					if (ConnectCallback) { // 连接回调
-						ConnectCallback(udid.c_str(),
-							appleInfo.DeviceName().c_str(),
-							appleInfo.ProductType().c_str(),
-							appleInfo.DeviceEnclosureColor().c_str(),
-							appleInfo.MarketingName().c_str()
-						);
+				gudid[udid] = deviceHandle;
+				auto appleInfo = iOSDeviceInfo(deviceHandle);
+				// 连接回调
+				if (ConnectCallback) { // 连接回调
+					ConnectCallback(udid.c_str(),
+						appleInfo.DeviceName().c_str(),
+						appleInfo.ProductType().c_str(),
+						appleInfo.DeviceEnclosureColor().c_str(),
+						appleInfo.MarketingName().c_str()
+					);
+				}
+				logger.log("Start Device.");
+				logger.log("Device %p connected,udid:%s", deviceHandle, udid.c_str());
+				if (gautoAuthorize)   //自动授权
+				{
+					auto ret = AuthorizeDeviceEx(deviceHandle);
+					if (iOSDeviceInfo::DoPairCallback)
+						iOSDeviceInfo::DoPairCallback(udid.c_str(), ret ? AuthorizeReturnStatus::AuthorizeSuccess : AuthorizeReturnStatus::AuthorizeFailed);
+					if (gipaPath) {
+						InstallApplicationEx(deviceHandle, gipaPath);
 					}
-					logger.log("Start Device.");
-					logger.log("Device %p connected,udid:%s", deviceHandle, udid.c_str());
-					if (gautoAuthorize)   //自动授权
+				}
+				break; 
+			}
+			case ADNCI_MSG_DISCONNECTED:
+			{
+				string udid;
+				for (auto it : gudid)
+				{
+					if (it.second == deviceHandle)
 					{
-						auto ret = AuthorizeDeviceEx(deviceHandle);
-						if (iOSDeviceInfo::DoPairCallback)
-							iOSDeviceInfo::DoPairCallback(udid.c_str(), ret ? AuthorizeReturnStatus::AuthorizeSuccess : AuthorizeReturnStatus::AuthorizeFailed);
-						if (gipaPath) {
-							InstallApplicationEx(deviceHandle, gipaPath);
-						}
+						udid = it.first;
+						break;
 					}
 				}
+				gudid.erase(udid);
+				if (DisconnectCallback) {
+					DisconnectCallback(udid.c_str());
+				}
+				logger.log("Device %p disconnected,udid:%s", deviceHandle, udid.c_str());
+				break;
 			}
-			else
-			{
-				logger.log("不处理USB以外连接设备 %p 进行connect.", deviceHandle);
-			}
-			break; 
+			case ADNCI_MSG_UNKNOWN:
+				logger.log("Unsubscribed");
+				break;
+			default:
+				logger.log("Unknown message %d\n", CallbackInfo->msgType);
+				break;
 		}
-		case ADNCI_MSG_DISCONNECTED:
-		{
-			string udid;
-			for (auto it : gudid)
-			{
-				if (it.second == deviceHandle)
-				{
-					udid = it.first;
-					break;
-				}
-			}
-			if (udid.length() > 24) {  //只有取到udid
-				if ((ConnectMode)AMDeviceGetInterfaceType(gudid.at(udid)) == ConnectMode::USB)  //只有usb 设置才discount
-				{
-					gudid.erase(udid);
-					if (DisconnectCallback) {
-						DisconnectCallback(udid.c_str());
-					}
-					logger.log("Device %p disconnected,udid:%s", deviceHandle, udid.c_str());
-				}
-				else
-				{
-					logger.log("不处理USB以外设备Device %p disconnected.", deviceHandle);
-				}
-			}
-			else
-			{
-				logger.log("Device %p disconnected,udid:NULL.", deviceHandle);
-			}
-			break;
-		}
-		case ADNCI_MSG_UNKNOWN:
-			logger.log("Unsubscribed");
-			break;
-		default:
-			logger.log("Unknown message %d\n", CallbackInfo->msgType);
-			break;
 	}
+	else
+	{
+		logger.log("不处理USB以外连接设备 %p 进行connect.", deviceHandle);
+	}
+
 }
 
 bool StartListen(bool autoAuthorize,const char* ipaPath)
