@@ -46,7 +46,7 @@ windows 平台支持windows 10之后版本，itunes 安装最新版本或者说�
 ```cmd
 > git clone https://github.com/microsoft/vcpkg
 > .\vcpkg\bootstrap-vcpkg.bat
-> .\vcpkg\vcpkg install grpc:x64-windows protobuf:x64-windows openssl:x64-windows abseil:x64-windows
+> .\vcpkg\vcpkg install openssl:x64-windows
 > .\vcpkg\vcpkg integrate install
 ```
 
