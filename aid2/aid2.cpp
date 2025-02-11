@@ -5,25 +5,22 @@
 #include "iOSDeviceInfo.h"
 #include "iOSApplication.h"
 #include "ATH.h"
-#include "GenerateRS_client.h"
+#include <httplib.h>
+#include "RemoteAuth.h"
 #include "Logger.h"
 #include "aid2.h"
 
 using namespace std;
 using namespace aid2;
-static map<string, AMDeviceRef> gudid;
-static bool gautoAuthorize = true;
-static char* gipaPath;
+static map<string, AMDeviceRef> gudid; //udid和设备句柄映射
 static future<void> gfutListen;
 static CFRunLoopRef grunLoop;
-
-// 连接回调指针函数指针变量
-static ConnectCallbackFunc ConnectCallback = nullptr;
-// 断开连接回调函数指针变量
-static DisconnectCallbackFunc  DisconnectCallback = nullptr;
-static AuthorizeDeviceCallbackFunc DoPairCallback = nullptr;
-
-
+static ConnectCallbackFunc ConnectCallback = nullptr; // 连接回调指针函数指针变量
+static DisconnectCallbackFunc  DisconnectCallback = nullptr; // 断开连接回调函数指针变量
+static string strAidservUrl;
+static string strRootCert;
+static string strClientKey;
+static string strClientCert;
 
 
 void device_notification_callback(struct AMDeviceNotificationCallbackInformation* CallbackInfo)
@@ -49,15 +46,6 @@ void device_notification_callback(struct AMDeviceNotificationCallbackInformation
 				}
 				logger.log("Start Device.");
 				logger.log("Device %p connected,udid:%s", deviceHandle, udid.c_str());
-				if (gautoAuthorize)   //自动授权
-				{
-					auto ret = AuthorizeDeviceEx(deviceHandle);
-					if (iOSDeviceInfo::DoPairCallback)
-						iOSDeviceInfo::DoPairCallback(udid.c_str(), ret ? AuthorizeReturnStatus::AuthorizeSuccess : AuthorizeReturnStatus::AuthorizeFailed);
-					if (gipaPath) {
-						InstallApplicationEx(deviceHandle, gipaPath);
-					}
-				}
 				break; 
 			}
 			case ADNCI_MSG_DISCONNECTED:
@@ -93,14 +81,25 @@ void device_notification_callback(struct AMDeviceNotificationCallbackInformation
 
 }
 
-bool StartListen(bool autoAuthorize,const char* ipaPath)
+AID2_API void Setaidserv(const char* url)
 {
-	gautoAuthorize = autoAuthorize;
-	gfutListen = async(launch::async, [autoAuthorize] {
+	strAidservUrl = url;
+}
+
+AID2_API void TransferCertificate(const char* rootcert, const char* clientkey, const char* clientcert)
+{
+	strRootCert = rootcert;
+	strClientKey = clientkey;
+	strClientCert = clientcert;
+}
+
+bool StartListen()
+{
+	gfutListen = async(launch::async, [] {
 		void* subscribe = nullptr;
 		int ret = AMDeviceNotificationSubscribe(device_notification_callback, 0, 0, 0, &subscribe);
 		if (ret) {
-			logger.log("StartListen( %s ) failed.", autoAuthorize?"True":"False");
+			logger.log("StartListen failed." );
 			return;
 		}
 		grunLoop = CFRunLoopGetCurrent();
@@ -108,13 +107,8 @@ bool StartListen(bool autoAuthorize,const char* ipaPath)
 		AMDeviceNotificationUnsubscribe(subscribe);
 		CFRelease(subscribe);
 		return;
-	});
-	if (ipaPath) {
-		auto len = strlen(ipaPath);
-		gipaPath = (char*)malloc(len + 1);
-		memcpy(gipaPath, ipaPath, len + 1);
-	}
-	logger.log("StartListen( %s ) success.", autoAuthorize ? "True" : "False");
+		});
+	logger.log("StartListen success.");
 	return true;
 }
 
@@ -122,27 +116,51 @@ bool StopListen()
 {
 	CFRunLoopStop(grunLoop);
 	gfutListen.wait();
-	free(gipaPath);
-	logger.log( "StopListen success." );
+	logger.log("StopListen success.");
 	return true;
+}
+
+bool AuthorizeDevice(const char* udid) {
+	int i = 0;
+	map<string, AMDeviceRef>::iterator iter;
+	for (;;) {
+		this_thread::sleep_for(chrono::milliseconds(2));
+		iter = gudid.find(udid);
+		if (iter == gudid.end()) {
+			if (i++ >= 30) {
+				logger.log("设备没有插入，初始化失败。");
+				return false;
+			}
+		}
+		else {
+			break;
+		}
+	}
+	auto deviceHandle = iter->second;
+	return AuthorizeDeviceEx(deviceHandle);
 }
 
 bool AuthorizeDeviceEx(void* deviceHandle)
 {
 	iOSDeviceInfo appleInfo((AMDeviceRef)deviceHandle);
-
-	if (!appleInfo.DoPair()) {
+	if (appleInfo.DoPair()) {
 		logger.log("信认失败或没有通过。");
 		return false;
 	};
 
-	aidClient* client = aidClient::NewInstance((AMDeviceRef)deviceHandle);
+	RemoteAuth* client;
+	if (strRootCert.empty())
+		client = new RemoteAuth(strAidservUrl, (AMDeviceRef)deviceHandle);
+	else if (strClientCert.empty())
+		client = new RemoteAuth(strAidservUrl, (AMDeviceRef)deviceHandle, strRootCert);
+	else
+		client = new RemoteAuth(strAidservUrl, (AMDeviceRef)deviceHandle, strRootCert, strClientCert, strClientKey);
 	string remote_grappa = string();
 	string grappa = string();
 
 	try
 	{
-		string udid = getUdid((AMDeviceRef)deviceHandle);
+		string udid = appleInfo.udid();
 		ATH ath = ATH(udid);  //new出同步实例
 		
 		if (!client->GenerateGrappa(remote_grappa))  //Grappa数据生成
@@ -211,13 +229,14 @@ bool AuthorizeDeviceEx(void* deviceHandle)
 }
 
 
-bool AuthorizeDevice(const char * udid) {
+int DoPair(const char* udid)
+{
 	int i = 0;
 	map<string, AMDeviceRef>::iterator iter;
 	for (;;) {
 		this_thread::sleep_for(chrono::milliseconds(2));
 		iter = gudid.find(udid);
-		if (iter == gudid.end()){
+		if (iter == gudid.end()) {
 			if (i++ >= 30) {
 				logger.log("设备没有插入，初始化失败。");
 				return false;
@@ -228,9 +247,16 @@ bool AuthorizeDevice(const char * udid) {
 		}
 	}
 	auto deviceHandle = iter->second;
-	return AuthorizeDeviceEx(deviceHandle);
+	iOSDeviceInfo iosdevice(deviceHandle);
+	return iosdevice.DoPair();
 }
 
+
+int DoPairEx(void* deviceHandle)
+{
+	iOSDeviceInfo iosdevice((AMDeviceRef)deviceHandle);
+	return iosdevice.DoPair();
+}
 
 bool InstallApplicationEx(void* deviceHandle, const char* ipaPath)
 {
@@ -261,11 +287,6 @@ bool InstallApplication(const char* udid, const char* ipaPath) {
 	return InstallApplicationEx(deviceHandle, ipaPath);
 }
 
-
-//注册授权回调函数，授权过程中需要配对信息和授权结果通过回调函数通知
-void RegisterAuthorizeCallback(AuthorizeDeviceCallbackFunc callback) {
-	iOSDeviceInfo::DoPairCallback = callback;
-}
 
 //注册安装回调函数，授权过程中需要配对信息和授权结果通过回调函数通知
 void RegisterInstallCallback(InstallApplicationFunc callback) {

@@ -4,8 +4,11 @@
     <Filter Include="iTunesApi">
       <UniqueIdentifier>{a214818d-07d0-4b0c-9ed0-cdc0aa448c58}</UniqueIdentifier>
     </Filter>
-    <Filter Include="ProtoBuf">
-      <UniqueIdentifier>{f09fb269-3c58-4e37-a637-2ad7cd6298bd}</UniqueIdentifier>
+    <Filter Include="cpp-httplib">
+      <UniqueIdentifier>{511c3637-62b9-4404-97c6-63437e1aa931}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="cpp-base64">
+      <UniqueIdentifier>{41b36c1f-7f08-4949-8491-fee416369c41}</UniqueIdentifier>
     </Filter>
   </ItemGroup>
   <ItemGroup>
@@ -19,18 +22,18 @@
       <Filter>iTunesApi</Filter>
     </ClInclude>
     <ClInclude Include="aid2.h" />
-    <ClInclude Include="..\ProtoBuf\GenerateRS\GenerateRS.grpc.pb.h">
-      <Filter>ProtoBuf</Filter>
-    </ClInclude>
-    <ClInclude Include="..\ProtoBuf\GenerateRS\GenerateRS.pb.h">
-      <Filter>ProtoBuf</Filter>
-    </ClInclude>
     <ClInclude Include="Logger.h" />
     <ClInclude Include="ATH.h" />
     <ClInclude Include="Afsync.h" />
     <ClInclude Include="iOSDeviceInfo.h" />
     <ClInclude Include="iOSApplication.h" />
-    <ClInclude Include="GenerateRS_client.h" />
+    <ClInclude Include="RemoteAuth.h" />
+    <ClInclude Include="..\cpp-httplib\httplib.h">
+      <Filter>cpp-httplib</Filter>
+    </ClInclude>
+    <ClInclude Include="cpp-base64\cpp-base64.h">
+      <Filter>cpp-base64</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="iTunesApi\helper.cpp">
@@ -44,20 +47,14 @@
     </ClCompile>
     <ClCompile Include="dllmain.cpp" />
     <ClCompile Include="aid2.cpp" />
-    <ClCompile Include="..\ProtoBuf\GenerateRS\GenerateRS.grpc.pb.cc">
-      <Filter>ProtoBuf</Filter>
-    </ClCompile>
-    <ClCompile Include="..\ProtoBuf\GenerateRS\GenerateRS.pb.cc">
-      <Filter>ProtoBuf</Filter>
-    </ClCompile>
     <ClCompile Include="Logger.cpp" />
     <ClCompile Include="ATH.cpp" />
     <ClCompile Include="Afsync.cpp" />
     <ClCompile Include="iOSDeviceInfo.cpp" />
     <ClCompile Include="iOSApplication.cpp" />
-    <ClCompile Include="GenerateRS_client.cpp" />
-  </ItemGroup>
-  <ItemGroup>
-    <None Include="aid2.def" />
+    <ClCompile Include="RemoteAuth.cpp" />
+    <ClCompile Include="cpp-base64\cpp-base64.cpp">
+      <Filter>cpp-base64</Filter>
+    </ClCompile>
   </ItemGroup>
 </Project>

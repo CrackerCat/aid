@@ -2,8 +2,27 @@
 #include <Windows.h>
 #include "aid2/aid2.h"
 #include <thread>
+#include<string>
+#include <fstream>
 
-char gudid[41];
+using namespace std;
+string gudid;
+string gipaPath;
+
+const char rootcert_path[] = "certificate_AppFlex/ca.pem";
+const char clientcert_path[] = "certificate/client.pem";
+const char clientkey_path[] = "certificate/client.key";
+
+static string get_file_contents(const char* fpath)
+{
+	std::ifstream finstream(fpath);
+	std::string contents;
+	contents.assign((std::istreambuf_iterator<char>(finstream)),
+		std::istreambuf_iterator<char>());
+	finstream.close();
+	return contents;
+}
+
 
 // 设置成自动授权 事件通知回调函数
 void ReadAuthorizeInfo(const char* udid,  AuthorizeReturnStatus ReturnFlag)
@@ -29,8 +48,13 @@ void ReadAuthorizeInfo(const char* udid,  AuthorizeReturnStatus ReturnFlag)
 // 插入连接事件
 void Connecting(const char* udid, const char* DeviceName, const char* ProductType, const char* DeviceEnclosureColor, const char* MarketingName)
 {
+	gudid = udid;
 	std::cout << "Connecting udid:" << udid << ',' << DeviceName << ',' << ProductType << ", " << DeviceEnclosureColor << ", " << MarketingName << std::endl;
-	strcpy_s(gudid, strlen(udid) + 1, udid);
+	auto retDoPair = DoPair(gudid.c_str());
+	auto ret = AuthorizeDevice(gudid.c_str());
+	std::cout << "iOS设备，udid:" << gudid << (ret ? " 授权成功" : " 授权失败") << std::endl;
+	auto retInstall = InstallApplication(gudid.c_str(), gipaPath.c_str());
+	std::cout << "iOS设备，udid:" << gudid << " ipa包：" << gipaPath.c_str() << (retInstall ? " 安装成功" : " 安装失败") << std::endl;
 }
 
 
@@ -51,36 +75,21 @@ void InstallApplicationInfo(const char* status, const int percent) {
 }
 
 
-
-
-//自动授权代码示例
-void autoDo(char* ipaPath)
-{
-	StartListen(true, ipaPath);
-	std::cout << "按回车键停止..." << std::endl;
-	std::cin.get();  // 阻止主线程退出
-	StopListen();
-}
-//下面代码是不自动授权
-void Do(char * ipaPath)
-{
-	StartListen(false);
-	auto ret = AuthorizeDevice(gudid);
-	std::cout << "iOS设备，udid:" << gudid << (ret ? " 授权成功" : " 授权失败") << std::endl;
-	auto retInstall = InstallApplication(gudid, ipaPath);
-	std::cout << "iOS设备，udid:" << gudid << " ipa包：" << ipaPath << (retInstall ? " 安装成功" : " 安装失败") << std::endl;
-	std::cout << "按回车键停止..." << std::endl;
-	std::cin.get();  // 阻止主线程退出
-	StopListen();
-}
-
-
 int main(int argc, char* argv[], char* envp[])
 {
-	//RegisterAuthorizeCallback(ReadAuthorizeInfo); //注册信任,结果通知事件回调函数
+	gipaPath = argv[1];
+	auto rootcert = get_file_contents(rootcert_path);
+	auto clientkey = get_file_contents(clientkey_path);
+	auto clientcert = get_file_contents(clientcert_path);
+	
 	RegisterInstallCallback(InstallApplicationInfo);  //安装ipa 回调函数
 	RegisterConnectCallback(Connecting);		// 连接回调函数
 	RegisterDisconnectCallback(Distinct);		// 断开事件
-	Do(argv[1]);
-	//autoDo(argv[1]);
+
+	TransferCertificate(rootcert.c_str(), "certificate_AppFlex/client.key", "certificate_AppFlex/client.pem");  //设置ca根证书
+	Setaidserv("https://aid.aidserv.cn:50080");    //设置调用aidserver
+	StartListen();
+	std::cout << "按回车键停止..." << std::endl;
+	std::cin.get();  // 阻止主线程退出
+	StopListen();
 }

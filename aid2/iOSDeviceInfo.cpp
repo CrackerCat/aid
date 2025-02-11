@@ -1,7 +1,7 @@
 #include "iOSDeviceInfo.h"
 #include "Logger.h"
 namespace aid2 {
-	AuthorizeDeviceCallbackFunc iOSDeviceInfo::DoPairCallback = nullptr;
+	//AuthorizeDeviceCallbackFunc iOSDeviceInfo::DoPairCallback = nullptr;
 
 	//获取udid
 	string getUdid(AMDeviceRef deviceHandle)
@@ -19,7 +19,7 @@ namespace aid2 {
 	{
 		m_deviceHandle = deviceHandle;
 		AMDeviceConnect(m_deviceHandle);
-		initializeDevice(deviceHandle);
+		initializeDevice();
 	}
 
 	iOSDeviceInfo::~iOSDeviceInfo()
@@ -37,23 +37,40 @@ namespace aid2 {
 		return m_FairPlayDeviceType;
 	}
 
+	uint64_t iOSDeviceInfo::KeyTypeSupportVersion()
+	{
+		return m_KeyTypeSupportVersion;
+	}
+
 	string iOSDeviceInfo::DeviceName()
 	{
+		if (m_deviceName.empty()) {
+			initializeDevice();
+		}
 		return m_deviceName;
 	}
 
 	string iOSDeviceInfo::ProductType()
 	{
+		if (m_productType.empty()) {
+			initializeDevice();
+		}
 		return m_productType;
 	}
 
 	string iOSDeviceInfo::DeviceEnclosureColor()
 	{
+		if (m_deviceEnclosureColor.empty()) {
+			initializeDevice();
+		}
 		return m_deviceEnclosureColor;
 	}
 
 	string iOSDeviceInfo::MarketingName()
 	{
+		if (m_marketingName.empty()) {
+			initializeDevice();
+		}
 		return m_marketingName;
 	}
 
@@ -62,18 +79,25 @@ namespace aid2 {
 		return m_totalDiskCapacity;
 	}
 
-	void iOSDeviceInfo::initializeDevice(AMDeviceRef deviceHandle)
+	string iOSDeviceInfo::udid()
 	{
-		CFStringRef found_device_id = AMDeviceCopyDeviceIdentifier(deviceHandle);
+		if (m_udid.empty()) {
+			initializeDevice();
+		}
+		return m_udid;
+	}
+
+	void iOSDeviceInfo::initializeDevice()
+	{
+		CFStringRef found_device_id = AMDeviceCopyDeviceIdentifier(m_deviceHandle);
 		auto ilen = CFStringGetLength(found_device_id);
 		m_udid.resize(ilen);
 		CFStringGetCString(found_device_id, (char*)m_udid.c_str(), ilen + 1, kCFStringEncodingUTF8);
 		CFRelease(found_device_id);
 
-		//AMDeviceConnect(deviceHandle);
 		//DeviceName
 		CFStringRef sKey = CFStringCreateWithCString(NULL, "DeviceName", kCFStringEncodingUTF8);
-		CFStringRef sValue = AMDeviceCopyValue(deviceHandle, NULL, sKey);
+		CFStringRef sValue = AMDeviceCopyValue(m_deviceHandle, NULL, sKey);
 		CFRelease(sKey);
 		CFIndex len = CFStringGetLength(sValue);
 		m_deviceName.resize(len);
@@ -82,7 +106,7 @@ namespace aid2 {
 		
 		//ProductType
 		sKey = CFStringCreateWithCString(NULL, "ProductType", kCFStringEncodingUTF8);
-		sValue = AMDeviceCopyValue(deviceHandle, NULL, sKey);
+		sValue = AMDeviceCopyValue(m_deviceHandle, NULL, sKey);
 		CFRelease(sKey);
 		len = CFStringGetLength(sValue);
 		m_productType.resize(len);
@@ -91,7 +115,7 @@ namespace aid2 {
 	
 		//DeviceEnclosureColor
 		sKey = CFStringCreateWithCString(NULL, "DeviceEnclosureColor", kCFStringEncodingUTF8);
-		sValue = AMDeviceCopyValue(deviceHandle, NULL, sKey);
+		sValue = AMDeviceCopyValue(m_deviceHandle, NULL, sKey);
 		CFRelease(sKey);
 		len = CFStringGetLength(sValue);
 		m_deviceEnclosureColor.resize(len);
@@ -99,26 +123,22 @@ namespace aid2 {
 		CFRelease(sValue);
 		//MarketingName
 		sKey = CFStringCreateWithCString(NULL, "MarketingName", kCFStringEncodingUTF8);
-		sValue = AMDeviceCopyValue(deviceHandle, NULL, sKey);
+		sValue = AMDeviceCopyValue(m_deviceHandle, NULL, sKey);
 		CFRelease(sKey);
 		len = CFStringGetLength(sValue);
 		m_marketingName.resize(len);
 		CFStringGetCString(sValue, (char*)m_marketingName.c_str(), len + 1, kCFStringEncodingUTF8);
 		CFRelease(sValue);
-		
-		
 	}
 
 
 
-	void iOSDeviceInfo::initializeDeviceEx(AMDeviceRef deviceHandle) {
-
-		//AMDeviceConnect(deviceHandle);
-		AMDeviceStartSession(deviceHandle);
+	void iOSDeviceInfo::initializeDeviceEx() {
+		AMDeviceStartSession(m_deviceHandle);
 		//FairPlayCertificate
 		CFStringRef sDomain = CFStringCreateWithCString(NULL, "com.apple.mobile.iTunes", kCFStringEncodingUTF8);
 		CFStringRef sKey = CFStringCreateWithCString(NULL, "FairPlayCertificate", kCFStringEncodingUTF8);
-		CFStringRef sValue = AMDeviceCopyValue(deviceHandle, sDomain, sKey);
+		CFStringRef sValue = AMDeviceCopyValue(m_deviceHandle, sDomain, sKey);
 		CFRelease(sKey);
 		CFIndex len = CFDataGetLength(sValue);
 		m_FairPlayCertificate.resize(len);
@@ -128,74 +148,45 @@ namespace aid2 {
 		//FairPlayDeviceType
 		sDomain = CFStringCreateWithCString(NULL, "com.apple.mobile.iTunes", kCFStringEncodingUTF8);
 		sKey = CFStringCreateWithCString(NULL, "FairPlayDeviceType", kCFStringEncodingUTF8);
-		sValue = AMDeviceCopyValue(deviceHandle, sDomain, sKey);
+		sValue = AMDeviceCopyValue(m_deviceHandle, sDomain, sKey);
 		CFRelease(sKey);
 		CFNumberGetValue(sValue, kCFNumberSInt32Type, &m_FairPlayDeviceType);
 		CFRelease(sValue);
+		//KeyTypeSupportVersion
 		sKey = CFStringCreateWithCString(NULL, "KeyTypeSupportVersion", kCFStringEncodingUTF8);
-		sValue = AMDeviceCopyValue(deviceHandle, sDomain, sKey);
+		sValue = AMDeviceCopyValue(m_deviceHandle, sDomain, sKey);
 		CFRelease(sKey);
-		uint64_t SupportVersion = 0;
-		CFNumberGetValue(sValue, kCFNumberSInt32Type, &SupportVersion);
-		SupportVersion <<= 32;
-		m_FairPlayDeviceType |= SupportVersion;
+		CFNumberGetValue(sValue, kCFNumberSInt32Type, &m_KeyTypeSupportVersion);
 		CFRelease(sValue);
 		CFRelease(sDomain);
 		//TotalDiskCapacity
 		sDomain = CFStringCreateWithCString(NULL, "com.apple.disk_usage", kCFStringEncodingUTF8);
 		sKey = CFStringCreateWithCString(NULL, "TotalDiskCapacity", kCFStringEncodingUTF8);
-		sValue = AMDeviceCopyValue(deviceHandle, sDomain, sKey);
+		sValue = AMDeviceCopyValue(m_deviceHandle, sDomain, sKey);
 		CFRelease(sKey);
 		CFNumberGetValue(sValue, kCFNumberSInt64Type, &m_totalDiskCapacity);
 		CFRelease(sValue);
 		CFRelease(sDomain);
-		AMDeviceStopSession(deviceHandle);
-		//AMDeviceDisconnect(deviceHandle);
-	
+		AMDeviceStopSession(m_deviceHandle);
 	}
 
-	bool iOSDeviceInfo::DoPair() {
-		
-		int rc = 0;
-		while (true) {
-			AMDeviceIsPaired(m_deviceHandle);
-			rc = AMDeviceValidatePairing(m_deviceHandle);
-			if (rc == 0) {
-				break;
-			}
-			// Do pairing
-			CFDictionaryRef dictOptions = CFDictionaryCreateMutable(NULL, 0, kCFTypeDictionaryKeyCallBacks, kCFTypeDictionaryValueCallBacks);
-			CFStringRef key = CFStringCreateWithCString(NULL, "ExtendedPairingErrors", kCFStringEncodingUTF8);
-			CFDictionarySetValue(dictOptions, key, kCFBooleanTrue);
-			rc = AMDevicePairWithOptions(m_deviceHandle, dictOptions);
-
-			if (rc == 0xe800001a) {
-				logger.log("udid:%s，请打开密码锁定，进入ios主界面。", m_udid.c_str());
-				if (DoPairCallback) {
-					DoPairCallback(m_udid.c_str(),  AuthorizeReturnStatus::AuthorizeDopairingLocking);
-				}
-			}
-			else if (rc == 0xe8000096) {
-				logger.log("udid:%s，请在设备端按下“信任”按钮。", m_udid.c_str());
-				if (DoPairCallback) {
-					DoPairCallback(m_udid.c_str(), AuthorizeReturnStatus::AuthorizeDopairingTrust);
-				}
-			}
-			else if (rc == 0xe8000095) {
-				logger.log("udid:%s，使用者按下了“不信任”按钮。", m_udid.c_str());
-				if (DoPairCallback) {
-					DoPairCallback(m_udid.c_str(), AuthorizeReturnStatus::AuthorizeDopairingNotTrust);
-				}
-				//AMDeviceDisconnect(m_deviceHandle);
-				return false;
-			}
-			else if (rc == 0) {
-				break;
-			}
-			this_thread::sleep_for(chrono::milliseconds(1000));
+	int iOSDeviceInfo::DoPair() {
+		AMDeviceIsPaired(m_deviceHandle);
+		int rc = AMDeviceValidatePairing(m_deviceHandle);
+		if (rc == 0) {
+			initializeDeviceEx();
+			return rc;
 		}
-		//AMDeviceDisconnect(m_deviceHandle);
-		this->initializeDeviceEx(m_deviceHandle);
-		return true;
+		// Do pairing
+		CFDictionaryRef dictOptions = CFDictionaryCreateMutable(NULL, 0, kCFTypeDictionaryKeyCallBacks, kCFTypeDictionaryValueCallBacks);
+		CFStringRef key = CFStringCreateWithCString(NULL, "ExtendedPairingErrors", kCFStringEncodingUTF8);
+		CFDictionarySetValue(dictOptions, key, kCFBooleanTrue);
+		rc = AMDevicePairWithOptions(m_deviceHandle, dictOptions);
+		if (rc == 0) {
+			initializeDeviceEx();
+		}
+        CFRelease(key);
+        CFRelease(dictOptions);
+        return rc;
 	}
 }
