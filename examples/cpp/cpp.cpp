@@ -9,7 +9,7 @@ using namespace std;
 string gudid;
 string gipaPath;
 
-const char rootcert_path[] = "certificate_AppFlex/ca.pem";
+const char rootcert_path[] = "certificate/ca.pem";
 const char clientcert_path[] = "certificate/client.pem";
 const char clientkey_path[] = "certificate/client.key";
 
@@ -86,8 +86,8 @@ int main(int argc, char* argv[], char* envp[])
 	RegisterConnectCallback(Connecting);		// 连接回调函数
 	RegisterDisconnectCallback(Distinct);		// 断开事件
 
-	TransferCertificate(rootcert.c_str(), "certificate_AppFlex/client.key", "certificate_AppFlex/client.pem");  //设置ca根证书
-	Setaidserv("https://aid.aidserv.cn:50080");    //设置调用aidserver
+	TransferCertificate(rootcert.c_str(), "certificate/client.key", "certificate/client.pem");  //设置ca根证书
+	Setaidserv("https://aid.aidserv.cn:60080");    //设置调用aidserver
 	StartListen();
 	std::cout << "按回车键停止..." << std::endl;
 	std::cin.get();  // 阻止主线程退出
