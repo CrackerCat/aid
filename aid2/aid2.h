@@ -51,16 +51,16 @@ AID2_API bool StopListen();
 /*******************************************************
 根据udid授权
 参数：udid
-返回值：成功为true
+返回值：成功为AuthorizeReturnStatus::AuthorizeSuccess
 *******************************************************/
-AID2_API bool AuthorizeDevice(const char * udid);
+AID2_API AuthorizeReturnStatus AuthorizeDevice(const char * udid);
 
 /*******************************************************
 根据deviceHandle授权
 参数：deviceHandle
-返回值：成功为true
+返回值：成功为AuthorizeReturnStatus::AuthorizeSuccess
 *******************************************************/
-AID2_API bool AuthorizeDeviceEx(void* deviceHandle);
+AID2_API AuthorizeReturnStatus AuthorizeDeviceEx(void* deviceHandle);
 
 /******************************************************
 * 执行配对信息，首次配对手机上会出现信任和不信任按钮
@@ -68,6 +68,7 @@ AID2_API bool AuthorizeDeviceEx(void* deviceHandle);
 		LOCKDOWN_E_USER_DENIED_PAIRING                     = -18			使用者按下了“不信任”按钮。
 		LOCKDOWN_E_PASSWORD_PROTECTED                      = -17			请打开密码锁定，进入ios主界面
 		LOCKDOWN_E_MUX_ERROR                               =  -8			USB数据线断开或者接触不良
+															   0			配对成功
 ***************************************************************/
 AID2_API int DoPair(const char* udid);
 
@@ -77,6 +78,7 @@ AID2_API int DoPair(const char* udid);
 		LOCKDOWN_E_USER_DENIED_PAIRING                     = -18			使用者按下了“不信任”按钮。
 		LOCKDOWN_E_PASSWORD_PROTECTED                      = -17			请打开密码锁定，进入ios主界面
 		LOCKDOWN_E_MUX_ERROR                               =  -8			USB数据线断开或者接触不良
+															 0			配对成功
 ***************************************************************/
 AID2_API int DoPairEx(void* deviceHandle);
 

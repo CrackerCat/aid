@@ -155,8 +155,6 @@
       <OptimizeReferences>true</OptimizeReferences>
       <GenerateDebugInformation>true</GenerateDebugInformation>
       <EnableUAC>false</EnableUAC>
-      <ModuleDefinitionFile>aid2.def</ModuleDefinitionFile>
-      <AdditionalDependencies>grpc++_unsecure.lib;grpcpp_channelz.lib;grpc++_reflection.lib;grpc++_error_details.lib;grpc_plugin_support.lib;grpc++_alts.lib;grpc.lib;grpc++.lib;grpc_unsecure.lib;libprotobuf.lib;libprotobuf-lite.lib;libprotoc.lib;ws2_32.lib;%(AdditionalDependencies)</AdditionalDependencies>
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>

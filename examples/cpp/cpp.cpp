@@ -23,36 +23,26 @@ static string get_file_contents(const char* fpath)
 	return contents;
 }
 
-
-// 设置成自动授权 事件通知回调函数
-void ReadAuthorizeInfo(const char* udid,  AuthorizeReturnStatus ReturnFlag)
-{
-	std::cout << "iOS设备，udid:" << udid ;
-	switch (ReturnFlag)
-	{
-	case AuthorizeReturnStatus::AuthorizeDopairingLocking:
-		std::cout << "，请打开密码锁定，进入ios主界面。" << std::endl;
-		break;
-	case AuthorizeReturnStatus::AuthorizeDopairingTrust:
-		std::cout << "，请在设备端按下“信任”按钮。" << std::endl;
-		break;
-	case AuthorizeReturnStatus::AuthorizeDopairingNotTrust:
-		std::cout << "，使用者按下了“不信任”按钮。" << std::endl;
-		break;
-	default:
-		std::cout << (ReturnFlag == AuthorizeReturnStatus::AuthorizeSuccess ? " 授权成功" : " 授权失败") << std::endl;
-		break;
-	}
-}
-
 // 插入连接事件
 void Connecting(const char* udid, const char* DeviceName, const char* ProductType, const char* DeviceEnclosureColor, const char* MarketingName)
 {
 	gudid = udid;
 	std::cout << "Connecting udid:" << udid << ',' << DeviceName << ',' << ProductType << ", " << DeviceEnclosureColor << ", " << MarketingName << std::endl;
 	auto retDoPair = DoPair(gudid.c_str());
+	switch (retDoPair)
+	{
+	case AuthorizeReturnStatus::AuthorizeDopairingLocking:
+		std::cout << "，请打开密码锁定，进入ios主界面，在插拔手机。" << std::endl;
+		return;
+	case AuthorizeReturnStatus::AuthorizeDopairingTrust:
+		std::cout << "，请在设备端按下“信任”按钮，在插拔手机。" << std::endl;
+		return;
+	case AuthorizeReturnStatus::AuthorizeDopairingNotTrust:
+		std::cout << "，使用者按下了“不信任”按钮，请在设备端按下“信任”按钮，在插拔手机。" << std::endl;
+		return;
+	}
 	auto ret = AuthorizeDevice(gudid.c_str());
-	std::cout << "iOS设备，udid:" << gudid << (ret ? " 授权成功" : " 授权失败") << std::endl;
+	std::cout << "iOS设备，udid:" << gudid << (ret== AuthorizeReturnStatus::AuthorizeSuccess ? " 授权成功" : " 授权失败") << std::endl;
 	auto retInstall = InstallApplication(gudid.c_str(), gipaPath.c_str());
 	std::cout << "iOS设备，udid:" << gudid << " ipa包：" << gipaPath.c_str() << (retInstall ? " 安装成功" : " 安装失败") << std::endl;
 }
