@@ -5,6 +5,8 @@ V2.1 版本在之前2.0功能上增加了安装ipa 功能。
 
 V2.5 重新梳理了授权执行步骤，每台手机采用单线程对手机执行授权过程，降低了代码复杂度，提升了执行授权速度。
 
+V2.6 grpc编译的复杂度，改用了http接口调用，方便编译。
+
 需要在linux,mac,安卓或者商业应用的联系邮箱：2277695881@qq.com      qq:2277695881
 # 目录
 
@@ -16,7 +18,7 @@ V2.5 重新梳理了授权执行步骤，每台手机采用单线程对手机执
   - [安装 macOS Developer Tools](#安装-macos-developer-tools)
 - [编译](#编译)
   - [下载源码](#下载源码)
-  - [使用Visual Studio 2019编译](#使用visual-studio-2019编译)
+  - [使用Visual Studio 2022编译](#使用visual-studio-2022编译)
 - [运行](#运行)
   - [调试](#调试)
   - [命令行运行](#命令行运行)
@@ -35,9 +37,9 @@ windows 平台支持windows 10之后版本，itunes 安装最新版本或者说�
 ## 快速开始: Windows
 
 前置条件:
-- Windows 7 或更新的版本
+- Windows 10 或更新的版本
 - [Git][getting-started:git]
-- [Visual Studio][getting-started:visual-studio] 2019  或更新的版本（**包含英文语言包**）
+- [Visual Studio][getting-started:visual-studio] 2022  或更新的版本（**包含英文语言包**）
 
 首先，**请使用 `git clone vcpkg`** 并执行 bootstrap.bat 脚本。
 您可以将 vcpkg 安装在任何地方，但是通常我们建议您使用 vcpkg 作为 CMake 项目的子模块，并将其全局安装到 Visual Studio 项目中。
@@ -86,8 +88,8 @@ $ xcode-select --install
 
 ```
 
-## 使用Visual Studio 2019编译
-使用 Visual Studio 2019 打开 aid2.sln 文件，平台选择x64,然后编译整个解决方案
+## 使用Visual Studio 2022编译
+使用 Visual Studio 2022 打开 aid2.sln 文件，平台选择x64,然后编译整个解决方案
 
 然后到 https://github.com/aidserv/aid/releases 下载编译后版本，解压出aid2.zip压缩包,把certificate文件夹复制到编译输出目录下面就可以。
 

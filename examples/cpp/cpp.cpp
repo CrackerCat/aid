@@ -10,7 +10,7 @@ string gudid;
 string gipaPath;
 
 const char rootcert_path[] = "certificate/ca.pem";
-const char clientcert_path[] = "certificate/client.pem";
+const char clientcert_path[] = "certificate/client2025.pem";
 const char clientkey_path[] = "certificate/client.key";
 
 static string get_file_contents(const char* fpath)
@@ -86,7 +86,7 @@ int main(int argc, char* argv[], char* envp[])
 	RegisterConnectCallback(Connecting);		// 连接回调函数
 	RegisterDisconnectCallback(Distinct);		// 断开事件
 
-	TransferCertificate(rootcert.c_str(), "certificate/client.key", "certificate/client.pem");  //设置ca根证书
+	TransferCertificate(rootcert.c_str(), "certificate/client.key", "certificate/client2025.pem");  //设置ca根证书
 	Setaidserv("https://aid.aidserv.cn:60080");    //设置调用aidserver
 	StartListen();
 	std::cout << "按回车键停止..." << std::endl;
